@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
@@ -14,22 +13,20 @@ import { BarChartIcon } from './components/Icons';
 import { useAppContext } from './state/appContext';
 import { useFilteredData } from './hooks/useFilteredData';
 
-const ITEMS_PER_PAGE = 30;
-
 const App: React.FC = () => {
     const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, comparisonSnapshotKeys } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, comparisonSnapshotKeys, itemsPerPage } = state;
 
     const filteredAndSortedData = useFilteredData();
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
     const paginatedData = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredAndSortedData.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredAndSortedData, currentPage]);
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredAndSortedData.slice(start, start + itemsPerPage);
+    }, [filteredAndSortedData, currentPage, itemsPerPage]);
 
-    const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
 
     const comparisonInfo = useMemo(() => {
         if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {

@@ -1,4 +1,3 @@
-
 import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings } from '../types';
 
 export interface AppState {
@@ -13,6 +12,7 @@ export interface AppState {
     forecastSettings: ForecastSettings;
     sortConfig: SortConfig;
     currentPage: number;
+    itemsPerPage: number;
 }
 
 export const initialState: AppState = {
@@ -34,6 +34,7 @@ export const initialState: AppState = {
     },
     sortConfig: { key: 'riskScore', direction: 'desc' },
     currentPage: 1,
+    itemsPerPage: 30,
 };
 
 export type Action =
@@ -50,7 +51,8 @@ export type Action =
     | { type: 'RESET_FILTERS' }
     | { type: 'UPDATE_FORECAST_SETTINGS', payload: { key: keyof ForecastSettings, value: number } }
     | { type: 'UPDATE_SORT', payload: keyof ProductData }
-    | { type: 'SET_CURRENT_PAGE', payload: number };
+    | { type: 'SET_CURRENT_PAGE', payload: number }
+    | { type: 'SET_ITEMS_PER_PAGE', payload: number };
 
 export const appReducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
@@ -135,6 +137,12 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 currentPage: action.payload,
+            };
+        case 'SET_ITEMS_PER_PAGE':
+            return {
+                ...state,
+                itemsPerPage: action.payload,
+                currentPage: 1, // Reset to first page when changing items per page
             };
         default:
             return state;

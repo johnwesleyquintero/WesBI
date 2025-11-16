@@ -17,6 +17,7 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
 *   **Powerful Data Table:**
     *   **Advanced Filtering:** Drill down into your data by SKU, ASIN, product name, inventory age, stock status, and recommended action.
     *   **Dynamic Sorting:** Sort your entire dataset by any metric to quickly find what you need.
+    *   **Customizable Row Count:** Adjust the number of rows displayed per page (30, 50, 100, or 250) for flexible data analysis.
     *   **Conditional Highlighting:** Rows are automatically color-coded based on risk score, sales velocity, and recommended actions, drawing your attention to the most critical items.
 *   **Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
 
