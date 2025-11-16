@@ -1,5 +1,31 @@
-
 import type { ProductData, Stats, Snapshot } from '../types';
+
+/**
+ * Calculates a risk score for a product based on inventory age, sell-through,
+ * and stock levels. This logic was formerly in the web worker and csvParser.
+ * @param {Omit<ProductData, 'riskScore'>} item - The product data item.
+ * @returns {number} A risk score from 0 to 100.
+ */
+export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number => {
+    let score = 0;
+    const { totalInvAgeDays, available, shippedT30, pendingRemoval } = item;
+
+    if (totalInvAgeDays > 365) score += 40;
+    else if (totalInvAgeDays > 180) score += 25;
+    else if (totalInvAgeDays > 90) score += 10;
+    
+    const sellThrough = available + shippedT30 > 0 ? (shippedT30 / (available + shippedT30)) * 100 : 0;
+    if (sellThrough < 10) score += 30;
+    else if (sellThrough < 25) score += 20;
+    else if (sellThrough < 50) score += 10;
+    
+    if (pendingRemoval > 10) score += 20;
+    else if (pendingRemoval > 5) score += 10;
+    
+    if (available < 5 && shippedT30 > 20) score += 15;
+    
+    return Math.min(score, 100);
+};
 
 export const calculateStats = (data: ProductData[]): Stats => {
     const totalProducts = data.length;

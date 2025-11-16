@@ -1,35 +1,5 @@
-
 import type { ProductData } from '../types';
-
-// --- Data processing functions moved from worker.js to centralize logic ---
-
-/**
- * Calculates a risk score for a product based on inventory age, sell-through,
- * and stock levels. This logic was formerly in the web worker.
- * @param {Omit<ProductData, 'riskScore'>} item - The product data item.
- * @returns {number} A risk score from 0 to 100.
- */
-const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number => {
-    let score = 0;
-    const { totalInvAgeDays, available, shippedT30, pendingRemoval } = item;
-
-    if (totalInvAgeDays > 365) score += 40;
-    else if (totalInvAgeDays > 180) score += 25;
-    else if (totalInvAgeDays > 90) score += 10;
-    
-    const sellThrough = available + shippedT30 > 0 ? (shippedT30 / (available + shippedT30)) * 100 : 0;
-    if (sellThrough < 10) score += 30;
-    else if (sellThrough < 25) score += 20;
-    else if (sellThrough < 50) score += 10;
-    
-    if (pendingRemoval > 10) score += 20;
-    else if (pendingRemoval > 5) score += 10;
-    
-    if (available < 5 && shippedT30 > 20) score += 15;
-    
-    return Math.min(score, 100);
-};
-
+import { calculateRiskScore } from './dataProcessor';
 
 /**
  * Transforms raw CSV row objects into structured ProductData, calculating derived fields.
@@ -38,7 +8,12 @@ const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number => {
  * @returns {ProductData[]} Array of processed ProductData objects.
  */
 const parseAndProcessData = (results: any[]): ProductData[] => {
-    return results.map((row) => {
+    const mappedData = results.map((row): ProductData | null => {
+        const sku = row['sku'] || '';
+        if (!sku) {
+            return null; // This row is invalid, mark for removal
+        }
+
         const available = Number(row['available'] || 0);
         const shippedT30 = Number(row['units-shipped-t30'] || 0);
 
@@ -58,7 +33,7 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
         ) / totalInv : 0;
         
         const partialData: Omit<ProductData, 'riskScore'> = {
-            sku: row['sku'] || '',
+            sku: sku,
             asin: row['asin'] || '',
             name: row['product-name'] || '',
             condition: row['condition'] || '',
@@ -79,6 +54,8 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
         const riskScore = calculateRiskScore(partialData);
         return { ...partialData, riskScore };
     });
+
+    return mappedData.filter((item): item is ProductData => item !== null);
 };
 
 

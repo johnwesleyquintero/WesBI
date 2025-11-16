@@ -34,7 +34,7 @@ This project is built as a modern, self-contained single-page application, lever
 *   **Artificial Intelligence:**
     *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights" feature, providing sophisticated analysis of inventory data.
 *   **Data Handling & Visualization:**
-    *   **PapaParse:** A high-performance, in-browser CSV parser that utilizes a built-in web worker to handle large files without freezing the UI.
+    *   **PapaParse:** A high-performance, in-browser CSV parser used to efficiently process FBA snapshot files directly in the browser.
     *   **Recharts:** A composable charting library built on React components for creating beautiful and interactive data visualizations.
 
 ## ⚙️ How to Use
