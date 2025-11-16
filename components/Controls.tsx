@@ -191,18 +191,27 @@ const Controls: React.FC = () => {
             </div>
             <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-sm font-bold text-gray-700 mb-2">Restock Forecast Settings</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="relative">
-                        <input aria-label="Supplier Lead Time in days" type="number" value={forecastSettings.leadTime} onChange={(e) => handleForecastSettingChange('leadTime', e.target.value)} placeholder="Lead Time" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label htmlFor="leadTime" className="block text-xs font-medium text-gray-600 mb-1">Supplier Lead Time</label>
+                        <div className="relative">
+                            <input id="leadTime" aria-label="Supplier Lead Time in days" type="number" value={forecastSettings.leadTime} onChange={(e) => handleForecastSettingChange('leadTime', e.target.value)} placeholder="e.g., 30" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                        </div>
                     </div>
-                    <div className="relative">
-                        <input aria-label="Safety Stock in days" type="number" value={forecastSettings.safetyStock} onChange={(e) => handleForecastSettingChange('safetyStock', e.target.value)} placeholder="Safety Stock" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                    <div>
+                        <label htmlFor="safetyStock" className="block text-xs font-medium text-gray-600 mb-1">Safety Stock</label>
+                        <div className="relative">
+                            <input id="safetyStock" aria-label="Safety Stock in days" type="number" value={forecastSettings.safetyStock} onChange={(e) => handleForecastSettingChange('safetyStock', e.target.value)} placeholder="e.g., 14" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                        </div>
                     </div>
-                    <div className="relative">
-                        <input aria-label="Demand Forecast percentage change" type="number" value={forecastSettings.demandForecast} onChange={(e) => handleForecastSettingChange('demandForecast', e.target.value)} placeholder="Demand Forecast" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                    <div>
+                        <label htmlFor="demandForecast" className="block text-xs font-medium text-gray-600 mb-1">Demand Forecast %</label>
+                        <div className="relative">
+                            <input id="demandForecast" aria-label="Demand Forecast percentage change" type="number" value={forecastSettings.demandForecast} onChange={(e) => handleForecastSettingChange('demandForecast', e.target.value)} placeholder="e.g., 10" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                        </div>
                     </div>
                 </div>
             </div>
