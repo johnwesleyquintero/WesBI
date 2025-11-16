@@ -6,6 +6,7 @@ export interface AppState {
     loadingState: LoadingState;
     isComparisonMode: boolean;
     isComparisonModalOpen: boolean;
+    isHelpModalOpen: boolean;
     comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
@@ -21,6 +22,7 @@ export const initialState: AppState = {
     loadingState: { isLoading: false, message: '', progress: 0 },
     isComparisonMode: false,
     isComparisonModalOpen: false,
+    isHelpModalOpen: false,
     comparisonSnapshotKeys: { base: null, compare: null },
     insights: [],
     filters: {
@@ -46,6 +48,8 @@ export type Action =
     | { type: 'SET_COMPARISON_MODE', payload: boolean }
     | { type: 'OPEN_COMPARISON_MODAL' }
     | { type: 'CLOSE_COMPARISON_MODAL' }
+    | { type: 'OPEN_HELP_MODAL' }
+    | { type: 'CLOSE_HELP_MODAL' }
     | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
     | { type: 'RESET_FILTERS' }
@@ -101,6 +105,10 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, isComparisonModalOpen: true };
         case 'CLOSE_COMPARISON_MODAL':
             return { ...state, isComparisonModalOpen: false };
+        case 'OPEN_HELP_MODAL':
+            return { ...state, isHelpModalOpen: true };
+        case 'CLOSE_HELP_MODAL':
+            return { ...state, isHelpModalOpen: false };
         case 'START_COMPARISON':
             return {
                 ...state,

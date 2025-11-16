@@ -40,23 +40,24 @@ This project is built as a modern, self-contained single-page application, lever
 ## ⚙️ How to Use
 
 1.  **Launch the Application:** Open the application in your web browser.
-2.  **Upload Your Data:**
+2.  **Get Help:** For a detailed walkthrough of all features, click the **(?)** icon in the top-right corner of the header to open the in-app **User Guide**.
+3.  **Upload Your Data:**
     *   Click the **"Upload & Process"** button and select one or more of your FBA Inventory Snapshot `.csv` files.
     *   The application will automatically parse the files, calculate metrics, and generate AI insights.
-3.  **Analyze Your Dashboard:**
+4.  **Analyze Your Dashboard:**
     *   The dashboard will load with summary statistics, AI-generated insights, and interactive charts.
     *   Scroll down to the data table to see a detailed breakdown of every SKU.
-4.  **Filter, Sort, and Forecast:**
+5.  **Filter, Sort, and Forecast:**
     *   Use the search bar and filter dropdowns to narrow down your data.
     *   Click on any column header in the data table to sort the data.
     *   Adjust the **Restock Forecast Settings** to get tailored reordering recommendations.
-5.  **Compare Snapshots:**
+6.  **Compare Snapshots:**
     *   Ensure at least two snapshots are loaded.
     *   Click the **"Compare..."** button. A modal will appear.
     *   Select your "Base" (older) and "Compare" (newer) snapshots and confirm.
     *   The dashboard and data table will now show the changes between the two snapshots.
     *   Click **"Exit Comparison"** to return to the single snapshot view.
-6.  **Export Data:**
+7.  **Export Data:**
     *   Click the **"Export"** button at any time to download the current data view (including all filters and sorting) as a new CSV file.
 
 ---

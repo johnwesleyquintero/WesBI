@@ -8,6 +8,7 @@ import Pagination from './components/Pagination';
 import Loader from './components/Loader';
 import ComparisonView from './components/ComparisonView';
 import ComparisonModal from './components/ComparisonModal';
+import HelpModal from './components/HelpModal';
 import InsightsPanel from './components/InsightsPanel';
 import { BarChartIcon } from './components/Icons';
 import { useAppContext } from './state/appContext';
@@ -15,7 +16,7 @@ import { useFilteredData } from './hooks/useFilteredData';
 
 const App: React.FC = () => {
     const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, comparisonSnapshotKeys, itemsPerPage } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, comparisonSnapshotKeys, itemsPerPage } = state;
 
     const filteredAndSortedData = useFilteredData();
     
@@ -63,6 +64,7 @@ const App: React.FC = () => {
             <div className="max-w-screen-2xl mx-auto bg-white rounded-2xl shadow-2xl shadow-gray-300/30 overflow-hidden relative">
                 <Loader loadingState={loadingState} />
                 {isComparisonModalOpen && <ComparisonModal />}
+                {isHelpModalOpen && <HelpModal />}
                 <Header />
                 {isComparisonMode && (
                     <ComparisonView info={comparisonInfo} />
