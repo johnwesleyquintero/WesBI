@@ -12,6 +12,32 @@ import {
 } from '../services/filterUtils';
 import type { ProductData, ForecastSettings } from '../types';
 
+/**
+ * Rounds a number up to the nearest standard FBA shipment quantity.
+ * This reflects common case-pack or shipping plan quantities.
+ * @param recommendation The raw calculated restock number.
+ * @returns The rounded-up shipment quantity.
+ */
+const roundToShipmentQuantity = (recommendation: number): number => {
+    if (recommendation <= 0) {
+        return 0;
+    }
+
+    const tiers = [30, 50, 100, 150, 200, 250, 300, 400, 500];
+    
+    // Find the first tier that is greater than or equal to the recommendation
+    for (const tier of tiers) {
+        if (recommendation <= tier) {
+            return tier;
+        }
+    }
+
+    // If the recommendation is larger than the highest predefined tier (500),
+    // round up to the nearest 50.
+    // e.g., 501 -> 550, 549 -> 550, 550 -> 550, 551 -> 600
+    return Math.ceil(recommendation / 50) * 50;
+};
+
 const calculateRestockRecommendation = (item: ProductData, settings: ForecastSettings): number => {
     // No restock needed for items with no recent sales or that are being removed.
     if (item.shippedT30 <= 0 || item.recommendedAction.toLowerCase().includes('removal')) {
@@ -38,8 +64,8 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     // The recommendation should cover the gap to reach the ideal inventory level.
     const recommendation = idealInventoryLevel - item.available;
 
-    // Only recommend restocking if there's a need.
-    return recommendation > 0 ? Math.ceil(recommendation) : 0;
+    // Only recommend restocking if there's a need, and round to standard shipment quantities.
+    return roundToShipmentQuantity(recommendation);
 };
 
 export const useFilteredData = (): ProductData[] => {
