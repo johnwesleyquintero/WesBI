@@ -28,10 +28,26 @@ const App: React.FC = () => {
         search: '', condition: '', action: '', age: '', category: '', 
         minStock: '', maxStock: '', stockStatus: ''
     });
+    // State for immediate search input, to be debounced before applying to `filters`
+    const [searchInput, setSearchInput] = useState<string>('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'riskScore', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState<number>(1);
 
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
+
+    // Debounce effect for search input
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setFilters(prev => ({
+                ...prev,
+                search: searchInput,
+            }));
+        }, 300); // 300ms delay
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [searchInput]);
 
     const handleProcessFiles = useCallback(async (files: FileList) => {
         if (files.length === 0) return;
@@ -138,11 +154,16 @@ const App: React.FC = () => {
     }, [filters, activeSnapshotKey, isComparisonMode]);
 
     const handleFilterChange = useCallback(<K extends keyof Filters,>(key: K, value: Filters[K]) => {
-        setFilters(prev => ({...prev, [key]: value}));
+        if (key === 'search') {
+            setSearchInput(value as string);
+        } else {
+            setFilters(prev => ({...prev, [key]: value}));
+        }
     }, []);
 
     const handleResetFilters = useCallback(() => {
         setFilters({ search: '', condition: '', action: '', age: '', category: '', minStock: '', maxStock: '', stockStatus: '' });
+        setSearchInput('');
     }, []);
 
     const handleSort = useCallback((key: keyof ProductData) => {
@@ -199,7 +220,7 @@ const App: React.FC = () => {
                     onCompare={() => setComparisonMode(true)}
                     onShowAlerts={() => alert('Alerts are shown in the Insights panel.')}
                     onExport={() => alert('Export functionality to be implemented.')}
-                    filters={filters}
+                    filters={{...filters, search: searchInput}}
                     onFilterChange={handleFilterChange}
                     onResetFilters={handleResetFilters}
                     snapshotCount={snapshotKeys.length}

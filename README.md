@@ -36,7 +36,7 @@ This project is built as a modern, self-contained single-page application, lever
 
 ## ⚙️ How to Use
 
-1.  **Launch the Application:** Open the `index.html` file in your web browser.
+1.  **Launch the Application:** Open the `https://wes-bi.vercel.app` link in your web browser.
 2.  **Upload Your Data:**
     *   Click the **"Choose Files"** button and select one or more of your FBA Inventory Snapshot `.csv` files.
     *   Click the **"Process"** button.
