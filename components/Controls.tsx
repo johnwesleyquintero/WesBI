@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import type { Filters, ForecastSettings } from '../types';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';
@@ -12,6 +12,109 @@ interface ControlButtonProps {
     className: string;
     disabled?: boolean;
 }
+
+// --- New UploadZone Component ---
+interface UploadZoneProps {
+    title: string;
+    description: string;
+    onFileSelect: (files: FileList | File) => void;
+    selectedFiles: FileList | File | null;
+    onClear: () => void;
+    multiple: boolean;
+}
+
+const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
+    ({ title, description, onFileSelect, selectedFiles, onClear, multiple }, ref) => {
+        const [isDragOver, setIsDragOver] = useState(false);
+
+        const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            setIsDragOver(true);
+        };
+        const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            setIsDragOver(false);
+        };
+        const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                onFileSelect(multiple ? files : files[0]);
+            }
+        };
+        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                onFileSelect(multiple ? files : files[0]);
+            }
+        };
+        
+        const fileNames = useMemo(() => {
+            if (!selectedFiles) return null;
+            if (selectedFiles instanceof File) return selectedFiles.name;
+            if (selectedFiles.length > 0) {
+                const names = Array.from(selectedFiles).map(f => f.name);
+                if (names.length > 2) {
+                    return `${names.slice(0, 2).join(', ')}, and ${names.length - 2} more`;
+                }
+                return names.join(', ');
+            }
+            return null;
+        }, [selectedFiles]);
+
+        const baseClasses = "relative group flex flex-col items-center justify-center w-full h-full p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200";
+        const stateClasses = isDragOver 
+            ? "border-purple-500 bg-purple-50" 
+            : fileNames 
+                ? "border-green-500 bg-green-50"
+                : "border-gray-300 hover:border-gray-400 hover:bg-gray-50";
+
+        return (
+            <div 
+                className={`${baseClasses} ${stateClasses}`}
+                onClick={() => (ref as React.RefObject<HTMLInputElement>).current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                <input 
+                    ref={ref} 
+                    type="file" 
+                    accept=".csv" 
+                    multiple={multiple} 
+                    onChange={handleFileChange} 
+                    className="hidden"
+                />
+                {fileNames ? (
+                    <>
+                        <CheckCircleIcon className="w-8 h-8 text-green-500 mb-2" />
+                        <h3 className="font-bold text-gray-800 text-center">{title}</h3>
+                        <p className="text-xs text-gray-600 text-center truncate w-full px-2" title={fileNames}>{fileNames}</p>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClear();
+                            }}
+                            className="absolute top-2 right-2 p-1 rounded-full bg-white/50 text-gray-500 hover:bg-white hover:text-red-500"
+                            aria-label="Clear selection"
+                        >
+                            <XIcon className="w-4 h-4" />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <CloudUploadIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
+                        <h3 className="font-bold text-gray-800 text-center">{title}</h3>
+                        <p className="text-xs text-gray-500 text-center">{description}</p>
+                    </>
+                )}
+            </div>
+        );
+    }
+);
+UploadZone.displayName = "UploadZone";
+
 
 const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, className, disabled = false }) => (
     <button
@@ -28,7 +131,11 @@ const Controls: React.FC = () => {
     const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings, apiKey, aiFeaturesEnabled } = state;
 
     const [searchInput, setSearchInput] = useState(filters.search);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [snapshotFiles, setSnapshotFiles] = useState<FileList | null>(null);
+    const [financialFile, setFinancialFile] = useState<File | null>(null);
+
+    const snapshotInputRef = useRef<HTMLInputElement>(null);
+    const financialInputRef = useRef<HTMLInputElement>(null);
     const filteredData = useFilteredData();
 
     // Debounce search input
@@ -61,9 +168,14 @@ const Controls: React.FC = () => {
         dispatch({ type: 'UPDATE_FORECAST_SETTINGS', payload: { key, value: numValue } });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            processFiles(e.target.files, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
+    const handleProcessFiles = () => {
+        if (snapshotFiles && snapshotFiles.length > 0) {
+            processFiles(snapshotFiles, financialFile, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
+            // Reset file inputs after processing
+            setSnapshotFiles(null);
+            setFinancialFile(null);
+            if(snapshotInputRef.current) snapshotInputRef.current.value = '';
+            if(financialInputRef.current) financialInputRef.current.value = '';
         }
     };
     
@@ -120,49 +232,69 @@ const Controls: React.FC = () => {
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <ControlButton 
-                    onClick={() => fileInputRef.current?.click()} 
-                    className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]"
-                >
-                    <RocketIcon /> Upload &amp; Process
-                </ControlButton>
-                 <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                    onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
-                    aria-label="Upload FBA Snapshot CSV files"
-                />
-                <ControlButton onClick={handleStrategyClick} disabled={!activeSnapshotKey || !aiFeaturesEnabled} className="bg-teal-500 text-white hover:bg-teal-600">
-                    <SparklesIcon /> AI Strategy Session
-                </ControlButton>
-                <ControlButton onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
-                    <CompareIcon /> Compare...
-                </ControlButton>
-                <ControlButton onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
-                    <ExportIcon /> Export
-                </ControlButton>
-                 {Object.keys(snapshots).length > 0 && (
-                    <div className="lg:col-span-1">
-                        <label htmlFor="snapshot-select" className="sr-only">Active Snapshot</label>
-                        <select 
-                            id="snapshot-select" 
-                            value={activeSnapshotKey || ''} 
-                            onChange={handleSnapshotChange}
-                            disabled={isComparisonMode}
-                            className="w-full h-full px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-sm border border-gray-300 focus:ring-2 focus:ring-[#9c4dff] focus:outline-none disabled:bg-gray-200 disabled:cursor-not-allowed filter-select"
-                        >
-                            <option value="" disabled>Select a snapshot</option>
-                            {Object.keys(snapshots).sort().map(key => (
-                                <option key={key} value={key}>{snapshots[key].name}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                 {/* File Upload Section */}
+                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <UploadZone
+                        ref={snapshotInputRef}
+                        title="FBA Snapshots"
+                        description="Drop file(s) here or click"
+                        onFileSelect={(files) => setSnapshotFiles(files as FileList)}
+                        selectedFiles={snapshotFiles}
+                        onClear={() => { 
+                            setSnapshotFiles(null);
+                            if (snapshotInputRef.current) snapshotInputRef.current.value = '';
+                         }}
+                        multiple={true}
+                     />
+                     <UploadZone
+                        ref={financialInputRef}
+                        title="Financials Lookup"
+                        description="Drop a single CSV (Optional)"
+                        onFileSelect={(file) => setFinancialFile(file as File)}
+                        selectedFiles={financialFile}
+                        onClear={() => {
+                            setFinancialFile(null);
+                            if (financialInputRef.current) financialInputRef.current.value = '';
+                        }}
+                        multiple={false}
+                     />
+                 </div>
+                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <ControlButton 
+                        onClick={handleProcessFiles} 
+                        disabled={!snapshotFiles || snapshotFiles.length === 0}
+                        className="bg-[#9c4dff] text-white hover:bg-[#7a33ff] md:col-span-2 lg:col-span-1"
+                    >
+                        <RocketIcon /> Process Files
+                    </ControlButton>
+                    <ControlButton onClick={handleStrategyClick} disabled={!activeSnapshotKey || !aiFeaturesEnabled} className="bg-teal-500 text-white hover:bg-teal-600">
+                        <SparklesIcon /> AI Strategy
+                    </ControlButton>
+                    <ControlButton onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
+                        <CompareIcon /> Compare...
+                    </ControlButton>
+                    <ControlButton onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
+                        <ExportIcon /> Export
+                    </ControlButton>
+                </div>
             </div>
+            {Object.keys(snapshots).length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                    <label htmlFor="snapshot-select" className="text-sm font-semibold text-gray-700 mr-3">Active Snapshot:</label>
+                    <select 
+                        id="snapshot-select" 
+                        value={activeSnapshotKey || ''} 
+                        onChange={handleSnapshotChange}
+                        disabled={isComparisonMode}
+                        className="px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-sm border border-gray-300 focus:ring-2 focus:ring-[#9c4dff] focus:outline-none disabled:bg-gray-200 disabled:cursor-not-allowed filter-select"
+                    >
+                        <option value="" disabled>Select a snapshot</option>
+                        {Object.keys(snapshots).sort().map(key => (
+                            <option key={key} value={key}>{snapshots[key].name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
             
             <div className="space-y-4 pt-4 border-t border-gray-200">
                 <div className="relative">

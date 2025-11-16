@@ -1,12 +1,13 @@
 import { Dispatch } from 'react';
 import type { Snapshot } from '../types';
 import type { Action } from '../state/appReducer';
-import { parseCSV } from './csvParser';
+import { parseCSV, parseFinancialCSV } from './csvParser';
 import { calculateStats } from './dataProcessor';
 import { getInsightsFromGemini } from './geminiService';
 
 export const processFiles = async (
     files: FileList, 
+    financialFile: File | null,
     currentSnapshots: Record<string, Snapshot>,
     currentActiveKey: string | null,
     settings: { apiKey: string, aiFeaturesEnabled: boolean },
@@ -19,12 +20,26 @@ export const processFiles = async (
     const filesProcessedCount = files.length;
 
     try {
+        let progress = 0;
+        const progressStep = 90 / (files.length + (financialFile ? 1 : 0));
+
+        // Step 1: Parse the financial data file first (if it exists)
+        let financialDataMap = new Map();
+        if (financialFile) {
+            dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: `Processing financial data...`, progress: Math.round(progress) } });
+            financialDataMap = await parseFinancialCSV(financialFile);
+            progress += progressStep;
+        }
+
+        // Step 2: Process each FBA snapshot, enriching it with the financial data
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const fileName = file.name.replace('.csv', '');
-            dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: `Processing ${file.name}...`, progress: Math.round(((i + 1) / files.length) * 90) } });
+            progress += progressStep;
+            dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: `Processing ${file.name}...`, progress: Math.round(progress) } });
             
-            const data = await parseCSV(file);
+            // Pass the financial map to the parser
+            const data = await parseCSV(file, financialDataMap);
             const stats = calculateStats(data);
             newSnapshots[fileName] = { name: fileName, data, stats, timestamp: new Date().toISOString() };
         }

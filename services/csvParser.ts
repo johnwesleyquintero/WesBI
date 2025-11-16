@@ -1,6 +1,8 @@
 import type { ProductData } from '../types';
 import { calculateRiskScore } from './dataProcessor';
 
+type FinancialDataMap = Map<string, { cogs: number; price: number }>;
+
 /**
  * Safely parses a value into a number. Returns 0 if the value is not a valid number.
  * @param val The value to parse.
@@ -12,22 +14,26 @@ const parseNumeric = (val: any): number => {
 };
 
 /**
- * Transforms raw CSV row objects into structured ProductData, calculating derived fields.
- * This logic was formerly in the web worker.
+ * Transforms raw CSV row objects into structured ProductData, calculating derived fields
+ * and enriching with financial data from the lookup map.
  * @param {any[]} results - Array of row objects from PapaParse.
+ * @param {FinancialDataMap} financialDataMap - A map of SKU to its cost and price.
  * @returns {ProductData[]} Array of processed ProductData objects.
  */
-const parseAndProcessData = (results: any[]): ProductData[] => {
+const parseAndProcessData = (results: any[], financialDataMap: FinancialDataMap): ProductData[] => {
     const mappedData = results.map((row): ProductData | null => {
-        const sku = row['sku'] || '';
+        const sku = (row['sku'] || '').trim();
         if (!sku) {
             return null; // This row is invalid, mark for removal
         }
 
+        const financialLookup = financialDataMap.get(sku);
+
         const available = parseNumeric(row['available']);
         const shippedT30 = parseNumeric(row['units-shipped-t30']);
-        const cogs = parseNumeric(row['cogs']);
-        const price = parseNumeric(row['price']);
+        // Precedence: 1. Financial file, 2. FBA file, 3. Default to 0
+        const cogs = financialLookup?.cogs ?? parseNumeric(row['cogs']);
+        const price = financialLookup?.price ?? parseNumeric(row['price']);
 
         const invAge0to90 = parseNumeric(row['inv-age-0-to-90-days']);
         const invAge91to180 = parseNumeric(row['inv-age-91-to-180-days']);
@@ -77,15 +83,13 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
 
 
 /**
- * Parses a CSV file using PapaParse on the main thread.
- * This function has been refactored to remove the Web Worker to address
- * production stability issues. The data transformation logic is now included here.
- * @param {File} file - The CSV file to be parsed and processed.
+ * Parses the primary FBA snapshot CSV file using PapaParse on the main thread.
+ * @param {File} file - The FBA snapshot CSV file.
+ * @param {FinancialDataMap} financialDataMap - The pre-parsed map of financial data.
  * @returns {Promise<ProductData[]>} A promise that resolves to an array of processed product data.
  */
-export const parseCSV = (file: File): Promise<ProductData[]> => {
+export const parseCSV = (file: File, financialDataMap: FinancialDataMap): Promise<ProductData[]> => {
     return new Promise((resolve, reject) => {
-        // PapaParse is loaded from a CDN and available on the window object.
         if (!window.Papa) {
             return reject(new Error('PapaParse library is not available. This might be a network issue.'));
         }
@@ -100,7 +104,7 @@ export const parseCSV = (file: File): Promise<ProductData[]> => {
                     return;
                 }
                 try {
-                    const processedData = parseAndProcessData(results.data);
+                    const processedData = parseAndProcessData(results.data, financialDataMap);
                     resolve(processedData);
                 } catch (e: any) {
                     console.error('Error processing data:', e);
@@ -111,6 +115,44 @@ export const parseCSV = (file: File): Promise<ProductData[]> => {
                 console.error('CSV parsing critical error:', error);
                 reject(error);
             }
+        });
+    });
+};
+
+/**
+ * Parses a financial lookup CSV file into a Map for efficient data joining.
+ * Expected columns: 'sku', 'cogs', 'price'.
+ * @param {File} file - The financial data CSV file.
+ * @returns {Promise<FinancialDataMap>} A promise that resolves to the financial data map.
+ */
+export const parseFinancialCSV = (file: File): Promise<FinancialDataMap> => {
+    return new Promise((resolve, reject) => {
+        if (!window.Papa) {
+            return reject(new Error('PapaParse library is not available.'));
+        }
+        
+        const financialMap: FinancialDataMap = new Map();
+
+        window.Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results: any) => {
+                if (results.errors.length > 0) {
+                     reject(new Error(`Error parsing financial file: ${results.errors[0].message}`));
+                     return;
+                }
+                for (const row of results.data) {
+                    const sku = (row.sku || '').trim();
+                    if (sku) {
+                        financialMap.set(sku, {
+                            cogs: parseNumeric(row.cogs),
+                            price: parseNumeric(row.price),
+                        });
+                    }
+                }
+                resolve(financialMap);
+            },
+            error: (err: Error) => reject(err),
         });
     });
 };
