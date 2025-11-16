@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../state/appContext';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon } from './Icons';
 
 const HelpSection: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <div className="border-t border-gray-200 pt-4 mt-4 first:mt-0 first:border-t-0 first:pt-0">
@@ -67,6 +67,15 @@ const HelpModal: React.FC = () => {
                         <ul className="list-disc list-inside pl-4 space-y-1">
                             <li><strong>Gemini API Key:</strong> To unlock the "AI-Powered Insights" feature, you must provide your own Google Gemini API key. Your key is stored securely in your browser and is never sent to our servers.</li>
                             <li><strong>Enable AI Features:</strong> You can toggle the AI analysis on or off. If disabled, the app will function as a standard data analyzer without making any API calls.</li>
+                        </ul>
+                    </HelpSection>
+
+                    <HelpSection title="AI Strategy Session" icon={<SparklesIcon className="w-5 h-5" />}>
+                        <p>Go beyond insights and generate a complete operational playbook. This feature uses AI to build a step-by-step action plan based on your current data.</p>
+                        <ul className="list-disc list-inside pl-4 space-y-1">
+                            <li>Click the <strong>"AI Strategy Session"</strong> button.</li>
+                            <li>Select a high-level business goal from the dropdown, such as "Liquidate High-Risk Inventory".</li>
+                            <li>WesBI will analyze your snapshot and generate a detailed plan, including specific SKUs to focus on, to achieve your objective.</li>
                         </ul>
                     </HelpSection>
 

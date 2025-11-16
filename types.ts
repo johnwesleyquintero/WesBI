@@ -86,5 +86,6 @@ declare global {
     Recharts: any;
     React: any;
     ReactDOM: any;
+    marked: any;
   }
 }

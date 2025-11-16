@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { getStrategyFromGemini } from '../services/geminiService';
 import { SparklesIcon, XIcon } from './Icons';
@@ -54,6 +54,7 @@ const StrategyModal: React.FC = () => {
     };
     
     const handleCopyToClipboard = () => {
+        // We copy the raw markdown (`plan`) to preserve formatting for pasting elsewhere.
         navigator.clipboard.writeText(plan);
         dispatch({ type: 'ADD_TOAST', payload: {
             type: 'success',
@@ -61,6 +62,19 @@ const StrategyModal: React.FC = () => {
             message: 'The AI-generated strategy has been copied.'
         }});
     };
+
+    const parsedPlanHtml = useMemo(() => {
+        if (!plan) return '';
+        // If the 'marked' library is available on the window, parse the markdown to HTML.
+        if (window.marked) {
+            // Sanitize option is important but marked's default is good enough here
+            // since the source is trusted (our API call).
+            return window.marked.parse(plan);
+        }
+        // Fallback for robustness: if marked fails to load, display the raw text in a <pre> tag.
+        return `<pre style="white-space: pre-wrap; font-family: sans-serif; font-size: 14px;">${plan}</pre>`;
+    }, [plan]);
+
 
     return (
         <div 
@@ -70,6 +84,16 @@ const StrategyModal: React.FC = () => {
             aria-modal="true" 
             aria-labelledby="strategy-modal-title"
         >
+            <style>{`
+                .strategy-content h1, .strategy-content h2, .strategy-content h3 { font-weight: bold; margin-top: 1.25em; margin-bottom: 0.6em; color: #1f2937; }
+                .strategy-content h3 { font-size: 1.1rem; }
+                .strategy-content ul { list-style-type: disc; padding-left: 1.75em; margin-bottom: 1em; }
+                .strategy-content ol { list-style-type: decimal; padding-left: 1.75em; margin-bottom: 1em; }
+                .strategy-content li { margin-bottom: 0.5em; }
+                .strategy-content p { margin-bottom: 1em; line-height: 1.6; }
+                .strategy-content strong { font-weight: 600; color: #111827; }
+                .strategy-content code { background-color: #e5e7eb; padding: 0.2em 0.4em; margin: 0; font-size: 85%; border-radius: 3px; }
+            `}</style>
             <div 
                 className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col" 
                 onClick={e => e.stopPropagation()}
@@ -118,7 +142,10 @@ const StrategyModal: React.FC = () => {
                     {plan && (
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <h3 className="text-lg font-bold text-gray-800 mb-2">Your Action Plan for: <span className="text-[#9c4dff]">{goal}</span></h3>
-                            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{plan}</pre>
+                            <div
+                                className="text-sm text-gray-700 strategy-content"
+                                dangerouslySetInnerHTML={{ __html: parsedPlanHtml }}
+                            />
                         </div>
                     )}
                 </div>
