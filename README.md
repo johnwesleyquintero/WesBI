@@ -6,19 +6,21 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
 
 ## ✨ Key Features
 
-*   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like total inventory value, sell-through rate, average inventory age, and at-risk SKUs.
+*   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like Total Products, Available Inventory, Pending Removals, Sell-Through Rate, Average Inventory Age, and At-Risk SKUs.
 *   **AI-Powered Insights (Gemini):** Automatically generate concise, actionable business insights from your data. The system analyzes your inventory summary and provides recommendations to increase profit, reduce fees, and improve overall inventory health.
+*   **Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See per-SKU deltas for inventory levels, sales velocity, and risk scores directly within the data table and summary cards.
+*   **Restock Forecasting:** Proactively manage your inventory with calculated restock recommendations for each SKU. Fine-tune the forecast by adjusting key parameters like Supplier Lead Time, Safety Stock days, and overall Demand Forecast percentage.
 *   **Rich Data Visualization:**
     *   **Inventory Age Distribution:** Instantly see how much of your stock is aging and identify potential long-term storage fee risks.
     *   **Top At-Risk SKUs:** A bar chart highlighting products with the highest risk scores, helping you prioritize action.
     *   **Sell-Through Performance:** Identify your fastest-moving products to inform restocking and marketing decisions.
-*   **Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See deltas for inventory levels, sales velocity, and risk scores on a per-SKU basis.
-*   **Multi-File Processing:** Upload and process multiple FBA snapshot CSVs at once. The system intelligently merges the data, allowing for a consolidated view of your inventory.
-*   **Powerful Data Table:**
-    *   **Advanced Filtering:** Drill down into your data by SKU, ASIN, product name, inventory age, stock status, and recommended action.
+*   **Advanced Data Table:**
+    *   **Powerful Filtering & Search:** Instantly search by SKU, ASIN, or Product Name. Drill down into your data with comprehensive filters for Inventory Age, Recommended Action, Stock Status (Low, High, Stranded), and Min/Max Stock levels.
     *   **Dynamic Sorting:** Sort your entire dataset by any metric to quickly find what you need.
-    *   **Customizable Row Count:** Adjust the number of rows displayed per page (30, 50, 100, or 250) for flexible data analysis.
     *   **Conditional Highlighting:** Rows are automatically color-coded based on risk score, sales velocity, and recommended actions, drawing your attention to the most critical items.
+    *   **Customizable Pagination:** Adjust the number of rows displayed per page (30, 50, 100, or 250) for flexible data analysis.
+*   **Multi-File Processing & Export:** Upload and process multiple FBA snapshot CSVs at once for a consolidated view. Export your current filtered and sorted data to a new CSV file with a single click.
+*   **State Persistence:** Your user settings—including filters, sort preferences, forecast configurations, and items per page—are automatically saved in your browser, providing a seamless experience across sessions.
 *   **Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
 
 ## 🛠️ Technology Stack
@@ -32,25 +34,30 @@ This project is built as a modern, self-contained single-page application, lever
 *   **Artificial Intelligence:**
     *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights" feature, providing sophisticated analysis of inventory data.
 *   **Data Handling & Visualization:**
-    *   **PapaParse:** A high-performance, in-browser CSV parser to handle the FBA snapshot files.
+    *   **PapaParse:** A high-performance, in-browser CSV parser that utilizes a built-in web worker to handle large files without freezing the UI.
     *   **Recharts:** A composable charting library built on React components for creating beautiful and interactive data visualizations.
 
 ## ⚙️ How to Use
 
-1.  **Launch the Application:** Open the `https://wes-bi.vercel.app` link in your web browser.
+1.  **Launch the Application:** Open the application in your web browser.
 2.  **Upload Your Data:**
-    *   Click the **"Choose Files"** button and select one or more of your FBA Inventory Snapshot `.csv` files.
-    *   Click the **"Process"** button.
+    *   Click the **"Upload & Process"** button and select one or more of your FBA Inventory Snapshot `.csv` files.
+    *   The application will automatically parse the files, calculate metrics, and generate AI insights.
 3.  **Analyze Your Dashboard:**
     *   The dashboard will load with summary statistics, AI-generated insights, and interactive charts.
     *   Scroll down to the data table to see a detailed breakdown of every SKU.
-4.  **Filter and Sort:**
+4.  **Filter, Sort, and Forecast:**
     *   Use the search bar and filter dropdowns to narrow down your data.
     *   Click on any column header in the data table to sort the data.
+    *   Adjust the **Restock Forecast Settings** to get tailored reordering recommendations.
 5.  **Compare Snapshots:**
-    *   Upload a second (newer) snapshot file.
-    *   Click the **"Compare"** button. The dashboard and data table will now show the changes between the two most recent snapshots.
+    *   Ensure at least two snapshots are loaded.
+    *   Click the **"Compare..."** button. A modal will appear.
+    *   Select your "Base" (older) and "Compare" (newer) snapshots and confirm.
+    *   The dashboard and data table will now show the changes between the two snapshots.
     *   Click **"Exit Comparison"** to return to the single snapshot view.
+6.  **Export Data:**
+    *   Click the **"Export"** button at any time to download the current data view (including all filters and sorting) as a new CSV file.
 
 ---
 
