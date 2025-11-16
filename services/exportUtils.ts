@@ -1,3 +1,4 @@
+
 import type { ProductData } from '../types';
 
 const escapeCSVField = (field: any): string => {
@@ -36,6 +37,7 @@ export const exportToCSV = (data: ProductData[], filename: string) => {
         { key: 'recommendedAction', title: 'Recommended Action' },
         { key: 'riskScore', title: 'Risk Score' },
         { key: 'category', title: 'Category' },
+        { key: 'restockRecommendation', title: 'Restock Recommendation' },
     ];
     
     // Add comparison headers if they exist in the data

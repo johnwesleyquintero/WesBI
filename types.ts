@@ -17,6 +17,7 @@ export interface ProductData {
   recommendedAction: string;
   riskScore: number; // calculated field
   category: string;
+  restockRecommendation?: number; // calculated field
   // For comparison
   inventoryChange?: number;
   shippedChange?: number;
@@ -56,6 +57,12 @@ export interface Filters {
   minStock: string;
   maxStock: string;
   stockStatus: string;
+}
+
+export interface ForecastSettings {
+  leadTime: number;
+  safetyStock: number;
+  demandForecast: number;
 }
 
 export interface SortConfig {

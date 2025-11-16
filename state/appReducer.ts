@@ -1,5 +1,5 @@
 
-import type { ProductData, Snapshot, LoadingState, Filters, SortConfig } from '../types';
+import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings } from '../types';
 
 export interface AppState {
     snapshots: Record<string, Snapshot>;
@@ -10,6 +10,7 @@ export interface AppState {
     comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
+    forecastSettings: ForecastSettings;
     sortConfig: SortConfig;
     currentPage: number;
 }
@@ -25,6 +26,11 @@ export const initialState: AppState = {
     filters: {
         search: '', condition: '', action: '', age: '', category: '',
         minStock: '', maxStock: '', stockStatus: ''
+    },
+    forecastSettings: {
+        leadTime: 30,
+        safetyStock: 14,
+        demandForecast: 0,
     },
     sortConfig: { key: 'riskScore', direction: 'desc' },
     currentPage: 1,
@@ -42,6 +48,7 @@ export type Action =
     | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
     | { type: 'RESET_FILTERS' }
+    | { type: 'UPDATE_FORECAST_SETTINGS', payload: { key: keyof ForecastSettings, value: number } }
     | { type: 'UPDATE_SORT', payload: keyof ProductData }
     | { type: 'SET_CURRENT_PAGE', payload: number };
 
@@ -111,6 +118,11 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 filters: initialState.filters,
                 currentPage: 1,
+            };
+        case 'UPDATE_FORECAST_SETTINGS':
+            return {
+                ...state,
+                forecastSettings: { ...state.forecastSettings, [action.payload.key]: action.payload.value }
             };
         case 'UPDATE_SORT': {
             const newDirection = state.sortConfig.key === action.payload && state.sortConfig.direction === 'asc' ? 'desc' : 'asc';

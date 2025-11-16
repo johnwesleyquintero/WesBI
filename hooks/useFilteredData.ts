@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -10,11 +9,26 @@ import {
     applyMinStockFilter,
     applyMaxStockFilter
 } from '../services/filterUtils';
-import type { ProductData } from '../types';
+import type { ProductData, ForecastSettings } from '../types';
+
+const calculateRestockRecommendation = (item: ProductData, settings: ForecastSettings): number => {
+    if (item.shippedT30 <= 0) return 0;
+
+    const dailySales = item.shippedT30 / 30;
+    const forecastedDailySales = dailySales * (1 + (settings.demandForecast / 100));
+    
+    const demandDuringLeadTime = forecastedDailySales * settings.leadTime;
+    const requiredSafetyStock = forecastedDailySales * settings.safetyStock;
+
+    const idealInventoryLevel = demandDuringLeadTime + requiredSafetyStock;
+    const recommendation = idealInventoryLevel - item.available;
+
+    return recommendation > 0 ? Math.ceil(recommendation) : 0;
+};
 
 export const useFilteredData = (): ProductData[] => {
     const { state } = useAppContext();
-    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig, comparisonSnapshotKeys } = state;
+    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig, comparisonSnapshotKeys, forecastSettings } = state;
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
@@ -32,7 +46,16 @@ export const useFilteredData = (): ProductData[] => {
 
         if (!data) return [];
         
-        let filtered = data;
+        // Calculate restock recommendation for each item
+        const dataWithForecast = data.map(item => ({
+            ...item,
+            restockRecommendation: calculateRestockRecommendation(item, forecastSettings)
+        }));
+
+        // FIX: Explicitly type `filtered` as ProductData[] to match the return type of the filter functions.
+        // This resolves assignment errors where the inferred type of `dataWithForecast` was more specific
+        // (with a required `restockRecommendation`) than the `ProductData[]` returned by the filters.
+        let filtered: ProductData[] = dataWithForecast;
         filtered = applySearchFilter(filtered, filters.search);
         filtered = applyActionFilter(filtered, filters.action);
         filtered = applyAgeFilter(filtered, filters.age);
@@ -54,5 +77,5 @@ export const useFilteredData = (): ProductData[] => {
         
         return filtered;
 
-    }, [activeSnapshot, isComparisonMode, snapshots, filters, sortConfig, comparisonSnapshotKeys]);
+    }, [activeSnapshot, isComparisonMode, snapshots, filters, sortConfig, comparisonSnapshotKeys, forecastSettings]);
 };

@@ -50,6 +50,13 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
         if (item.riskScore > 70) return 'bg-amber-100 text-amber-800';
         return 'bg-green-100 text-green-800';
     };
+    
+    const getRestockCellClass = (recommendation: number | undefined) => {
+        if (recommendation && recommendation > 0) {
+            return 'bg-blue-100/50 font-bold text-blue-800';
+        }
+        return '';
+    }
 
     const renderChange = (change: number | undefined) => {
         if (change === undefined) return null;
@@ -87,6 +94,9 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
                 {item.riskScore}
                 {isComparisonMode && renderChange(item.riskScoreChange)}
             </td>
+            <td className={`text-right font-mono ${getRestockCellClass(item.restockRecommendation)}`}>
+                {item.restockRecommendation?.toLocaleString() ?? 0}
+            </td>
         </tr>
     );
 };
@@ -112,6 +122,7 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
         { key: 'sellThroughRate', title: 'Sell-Through', isNumeric: true },
         { key: 'recommendedAction', title: 'Action' },
         { key: 'riskScore', title: 'Risk Score', isNumeric: true },
+        { key: 'restockRecommendation', title: 'Restock Units', isNumeric: true },
     ];
 
     return (

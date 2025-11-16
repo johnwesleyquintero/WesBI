@@ -1,6 +1,6 @@
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import type { Filters } from '../types';
+import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -26,7 +26,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, classN
 
 const Controls: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { filters, snapshots, activeSnapshotKey, isComparisonMode } = state;
+    const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings } = state;
 
     const [searchInput, setSearchInput] = useState(filters.search);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +55,11 @@ const Controls: React.FC = () => {
         } else {
             dispatch({ type: 'UPDATE_FILTER', payload: { key, value } });
         }
+    };
+    
+    const handleForecastSettingChange = <K extends keyof ForecastSettings>(key: K, value: string) => {
+        const numValue = parseInt(value) || 0;
+        dispatch({ type: 'UPDATE_FORECAST_SETTINGS', payload: { key, value: numValue } });
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,6 +187,23 @@ const Controls: React.FC = () => {
                     >
                         Reset {activeFilterCount > 0 && `(${activeFilterCount})`}
                     </button>
+                </div>
+            </div>
+            <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-bold text-gray-700 mb-2">Restock Forecast Settings</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="relative">
+                        <input aria-label="Supplier Lead Time in days" type="number" value={forecastSettings.leadTime} onChange={(e) => handleForecastSettingChange('leadTime', e.target.value)} placeholder="Lead Time" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                    </div>
+                    <div className="relative">
+                        <input aria-label="Safety Stock in days" type="number" value={forecastSettings.safetyStock} onChange={(e) => handleForecastSettingChange('safetyStock', e.target.value)} placeholder="Safety Stock" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">days</span>
+                    </div>
+                    <div className="relative">
+                        <input aria-label="Demand Forecast percentage change" type="number" value={forecastSettings.demandForecast} onChange={(e) => handleForecastSettingChange('demandForecast', e.target.value)} placeholder="Demand Forecast" className="w-full p-2.5 pl-3 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                    </div>
                 </div>
             </div>
             <style>{`
