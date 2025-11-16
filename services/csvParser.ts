@@ -2,6 +2,16 @@ import type { ProductData } from '../types';
 import { calculateRiskScore } from './dataProcessor';
 
 /**
+ * Safely parses a value into a number. Returns 0 if the value is not a valid number.
+ * @param val The value to parse.
+ * @returns A valid number.
+ */
+const parseNumeric = (val: any): number => {
+    const num = Number(val);
+    return isNaN(num) ? 0 : num;
+};
+
+/**
  * Transforms raw CSV row objects into structured ProductData, calculating derived fields.
  * This logic was formerly in the web worker.
  * @param {any[]} results - Array of row objects from PapaParse.
@@ -14,14 +24,14 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
             return null; // This row is invalid, mark for removal
         }
 
-        const available = Number(row['available'] || 0);
-        const shippedT30 = Number(row['units-shipped-t30'] || 0);
+        const available = parseNumeric(row['available']);
+        const shippedT30 = parseNumeric(row['units-shipped-t30']);
 
-        const invAge0to90 = Number(row['inv-age-0-to-90-days'] || 0);
-        const invAge91to180 = Number(row['inv-age-91-to-180-days'] || 0);
-        const invAge181to270 = Number(row['inv-age-181-to-270-days'] || 0);
-        const invAge271to365 = Number(row['inv-age-271-to-365-days'] || 0);
-        const invAge365plus = Number(row['inv-age-365-plus-days'] || 0);
+        const invAge0to90 = parseNumeric(row['inv-age-0-to-90-days']);
+        const invAge91to180 = parseNumeric(row['inv-age-91-to-180-days']);
+        const invAge181to270 = parseNumeric(row['inv-age-181-to-270-days']);
+        const invAge271to365 = parseNumeric(row['inv-age-271-to-365-days']);
+        const invAge365plus = parseNumeric(row['inv-age-365-plus-days']);
 
         const totalInv = invAge0to90 + invAge91to180 + invAge181to270 + invAge271to365 + invAge365plus;
         const avgAge = totalInv > 0 ? (
@@ -38,7 +48,7 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
             name: row['product-name'] || '',
             condition: row['condition'] || '',
             available: available,
-            pendingRemoval: Number(row['pending-removal-quantity'] || 0),
+            pendingRemoval: parseNumeric(row['pending-removal-quantity']),
             invAge0to90,
             invAge91to180,
             invAge181to270,

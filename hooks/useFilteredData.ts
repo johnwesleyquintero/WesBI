@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -49,7 +48,8 @@ export const useFilteredData = (): ProductData[] => {
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
-    return useMemo(() => {
+    // Stage 1: Get the base dataset (either a single snapshot or a comparison)
+    const baseData = useMemo(() => {
         let data: ProductData[] = [];
         if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
              const oldSnap = snapshots[comparisonSnapshotKeys.base];
@@ -60,18 +60,25 @@ export const useFilteredData = (): ProductData[] => {
         } else if (activeSnapshot) {
             data = activeSnapshot.data;
         }
+        return data;
+    }, [activeSnapshot, isComparisonMode, snapshots, comparisonSnapshotKeys]);
 
-        if (!data) return [];
-        
-        // Calculate restock recommendation for each item
-        const dataWithForecast = data.map(item => ({
+    // Stage 2: Apply the potentially expensive forecast calculation.
+    // This only re-runs when the base data or forecast settings change.
+    const dataWithForecast = useMemo(() => {
+        if (!baseData) return [];
+        return baseData.map(item => ({
             ...item,
             restockRecommendation: calculateRestockRecommendation(item, forecastSettings)
         }));
-
+    }, [baseData, forecastSettings]);
+    
+    // Stage 3: Apply filtering and sorting.
+    // This re-runs frequently (on filter/sort changes) but operates on the already-calculated data.
+    return useMemo(() => {
+        if (!dataWithForecast) return [];
+        
         // FIX: Explicitly type `filtered` as ProductData[] to match the return type of the filter functions.
-        // This resolves assignment errors where the inferred type of `dataWithForecast` was more specific
-        // (with a required `restockRecommendation`) than the `ProductData[]` returned by the filters.
         let filtered: ProductData[] = dataWithForecast;
         filtered = applySearchFilter(filtered, filters.search);
         filtered = applyActionFilter(filtered, filters.action);
@@ -110,5 +117,5 @@ export const useFilteredData = (): ProductData[] => {
         
         return filtered;
 
-    }, [activeSnapshot, isComparisonMode, snapshots, filters, sortConfig, comparisonSnapshotKeys, forecastSettings]);
+    }, [dataWithForecast, filters, sortConfig]);
 };

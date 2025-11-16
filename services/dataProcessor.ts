@@ -28,14 +28,32 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
 };
 
 export const calculateStats = (data: ProductData[]): Stats => {
+    if (data.length === 0) {
+        return {
+            totalProducts: 0, totalAvailable: 0, totalPending: 0, totalShipped: 0,
+            avgDaysInventory: 0, sellThroughRate: 0, atRiskSKUs: 0
+        };
+    }
+
+    let totalAvailable = 0;
+    let totalPending = 0;
+    let totalShipped = 0;
+    let totalDaysWeighted = 0;
+    let atRiskSKUs = 0;
+
+    for (const item of data) {
+        totalAvailable += item.available;
+        totalPending += item.pendingRemoval;
+        totalShipped += item.shippedT30;
+        totalDaysWeighted += item.totalInvAgeDays * item.available;
+        if (item.riskScore > 70) {
+            atRiskSKUs++;
+        }
+    }
+    
     const totalProducts = data.length;
-    const totalAvailable = data.reduce((sum, i) => sum + i.available, 0);
-    const totalPending = data.reduce((sum, i) => sum + i.pendingRemoval, 0);
-    const totalShipped = data.reduce((sum, i) => sum + i.shippedT30, 0);
-    const totalDays = data.reduce((sum, i) => sum + (i.totalInvAgeDays * i.available), 0)
-    const avgDaysInventory = totalAvailable > 0 ? Math.round(totalDays / totalAvailable) : 0;
+    const avgDaysInventory = totalAvailable > 0 ? Math.round(totalDaysWeighted / totalAvailable) : 0;
     const sellThroughRate = totalAvailable + totalShipped > 0 ? Math.round((totalShipped / (totalAvailable + totalShipped)) * 100) : 0;
-    const atRiskSKUs = data.filter(i => i.riskScore > 70).length;
     
     return {
       totalProducts,
