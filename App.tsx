@@ -12,6 +12,7 @@ import { BarChartIcon } from './components/Icons';
 import { parseCSV } from './services/csvParser';
 import { calculateStats, compareSnapshots } from './services/dataProcessor';
 import { getInsightsFromGemini } from './services/geminiService';
+import { exportToCSV } from './services/exportUtils';
 import { 
     applySearchFilter, 
     applyActionFilter, 
@@ -154,6 +155,16 @@ const App: React.FC = () => {
             direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
         }));
     }, []);
+
+    const handleExport = useCallback(() => {
+        if (filteredAndSortedData.length === 0) {
+            alert("No data to export.");
+            return;
+        }
+        const timestamp = new Date().toISOString().split('T')[0];
+        const mode = isComparisonMode ? 'comparison' : 'snapshot';
+        exportToCSV(filteredAndSortedData, `wesbi_export_${mode}_${timestamp}.csv`);
+    }, [filteredAndSortedData, isComparisonMode]);
     
     const paginatedData = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -201,11 +212,12 @@ const App: React.FC = () => {
                     onProcessFiles={handleProcessFiles} 
                     onCompare={() => setComparisonMode(true)}
                     onShowAlerts={() => alert('Alerts are shown in the Insights panel.')}
-                    onExport={() => alert('Export functionality to be implemented.')}
+                    onExport={handleExport}
                     filters={{...filters, search: searchInput}}
                     onFilterChange={handleFilterChange}
                     onResetFilters={handleResetFilters}
                     snapshotCount={snapshotKeys.length}
+                    exportDataCount={filteredAndSortedData.length}
                 />
                 
                 <InsightsPanel insights={insights} />

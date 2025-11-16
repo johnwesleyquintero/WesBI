@@ -11,6 +11,7 @@ interface ControlsProps {
     onFilterChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
     onResetFilters: () => void;
     snapshotCount: number;
+    exportDataCount: number;
 }
 
 const ControlButton: React.FC<{
@@ -30,7 +31,8 @@ const ControlButton: React.FC<{
 
 const Controls: React.FC<ControlsProps> = ({ 
     onProcessFiles, onCompare, onShowAlerts, onExport, 
-    filters, onFilterChange, onResetFilters, snapshotCount
+    filters, onFilterChange, onResetFilters, snapshotCount,
+    exportDataCount
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,7 +64,7 @@ const Controls: React.FC<ControlsProps> = ({
                 <ControlButton onClick={onCompare} disabled={snapshotCount < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                     <CompareIcon /> Compare
                 </ControlButton>
-                <ControlButton onClick={onExport} disabled={snapshotCount < 1} className="bg-green-500 text-white hover:bg-green-600">
+                <ControlButton onClick={onExport} disabled={exportDataCount === 0} className="bg-green-500 text-white hover:bg-green-600">
                     <ExportIcon /> Export
                 </ControlButton>
             </div>
