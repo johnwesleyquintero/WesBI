@@ -155,31 +155,34 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             };
         case 'UPDATE_SORT': {
             const { key, shiftKey } = action.payload;
-            const currentSorts = [...state.sortConfig];
-            const existingSortIndex = currentSorts.findIndex(s => s.key === key);
+            const currentConfig = state.sortConfig;
 
+            // --- Multi-column sorting logic (Shift key is pressed) ---
             if (shiftKey) {
+                const newConfig = [...currentConfig];
+                const existingSortIndex = newConfig.findIndex(s => s.key === key);
                 if (existingSortIndex > -1) {
-                    // Toggle direction of existing sort in multi-sort
-                    currentSorts[existingSortIndex].direction = currentSorts[existingSortIndex].direction === 'asc' ? 'desc' : 'asc';
+                    // Case 1: Clicked an existing column in a multi-sort. Toggle its direction.
+                    newConfig[existingSortIndex].direction = newConfig[existingSortIndex].direction === 'asc' ? 'desc' : 'asc';
                 } else {
-                    // Add new sort criterion to multi-sort
-                    currentSorts.push({ key, direction: 'asc' });
+                    // Case 2: Clicked a new column to add to the multi-sort.
+                    newConfig.push({ key, direction: 'asc' });
                 }
-                return { ...state, sortConfig: currentSorts };
+                return { ...state, sortConfig: newConfig };
+            }
+            
+            // --- Single-column sorting logic (no Shift key) ---
+            // Check if the clicked column is already the ONLY sorted column.
+            const isToggling = currentConfig.length === 1 && currentConfig[0].key === key;
+            
+            if (isToggling) {
+                // Case 3: Toggle the direction.
+                const newDirection = currentConfig[0].direction === 'asc' ? 'desc' : 'asc';
+                return { ...state, sortConfig: [{ key, direction: newDirection }] };
             } else {
-                // Regular click (non-shift)
-                const isSameKeyAsSingleSort = state.sortConfig.length === 1 && state.sortConfig[0].key === key;
-
-                if (isSameKeyAsSingleSort) {
-                    // If clicking the same column that's already the single sort column, just toggle its direction.
-                    const newDirection = state.sortConfig[0].direction === 'asc' ? 'desc' : 'asc';
-                    return { ...state, sortConfig: [{ key, direction: newDirection }] };
-                } else {
-                    // If it's a new column, or if we are coming from a multi-sort,
-                    // reset to a single sort on the new column, defaulting to ascending.
-                    return { ...state, sortConfig: [{ key, direction: 'asc' }] };
-                }
+                // Case 4: Any other scenario (new column, or switching from multi-sort).
+                // Reset to a single sort on the clicked column, defaulting to ascending.
+                return { ...state, sortConfig: [{ key, direction: 'asc' }] };
             }
         }
         case 'SET_CURRENT_PAGE':
