@@ -37,6 +37,11 @@ export const exportToCSV = (data: ProductData[], filename: string) => {
         { key: 'recommendedAction', title: 'Recommended Action' },
         { key: 'riskScore', title: 'Risk Score' },
         { key: 'category', title: 'Category' },
+        { key: 'cogs', title: 'Cost of Goods' },
+        { key: 'price', title: 'Sale Price' },
+        { key: 'inventoryValue', title: 'Inventory Value' },
+        { key: 'potentialRevenue', title: 'Potential Revenue' },
+        { key: 'grossProfitPerUnit', title: 'Gross Profit Per Unit' },
         { key: 'restockRecommendation', title: 'Restock Recommendation' },
     ];
     
@@ -46,6 +51,7 @@ export const exportToCSV = (data: ProductData[], filename: string) => {
         headers.push({ key: 'shippedChange', title: 'Shipped Change' });
         headers.push({ key: 'ageChange', title: 'Age Change' });
         headers.push({ key: 'riskScoreChange', title: 'Risk Score Change' });
+        headers.push({ key: 'inventoryValueChange', title: 'Inventory Value Change' });
     }
 
     const headerRow = headers.map(h => h.title).join(',');

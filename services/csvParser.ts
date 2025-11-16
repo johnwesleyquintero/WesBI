@@ -26,6 +26,8 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
 
         const available = parseNumeric(row['available']);
         const shippedT30 = parseNumeric(row['units-shipped-t30']);
+        const cogs = parseNumeric(row['cogs']);
+        const price = parseNumeric(row['price']);
 
         const invAge0to90 = parseNumeric(row['inv-age-0-to-90-days']);
         const invAge91to180 = parseNumeric(row['inv-age-91-to-180-days']);
@@ -59,6 +61,11 @@ const parseAndProcessData = (results: any[]): ProductData[] => {
             sellThroughRate: available + shippedT30 > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0,
             recommendedAction: row['recommended-action'] || 'No Action',
             category: row['category'] || 'Unknown',
+            cogs: cogs,
+            price: price,
+            inventoryValue: available * cogs,
+            potentialRevenue: available * price,
+            grossProfitPerUnit: price - cogs,
         };
 
         const riskScore = calculateRiskScore(partialData);

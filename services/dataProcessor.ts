@@ -63,7 +63,8 @@ export const calculateStats = (data: ProductData[]): Stats => {
     if (data.length === 0) {
         return {
             totalProducts: 0, totalAvailable: 0, totalPending: 0, totalShipped: 0,
-            avgDaysInventory: 0, sellThroughRate: 0, atRiskSKUs: 0
+            avgDaysInventory: 0, sellThroughRate: 0, atRiskSKUs: 0,
+            totalInventoryValue: 0, capitalAtRisk: 0, totalPotentialRevenue: 0
         };
     }
 
@@ -72,14 +73,20 @@ export const calculateStats = (data: ProductData[]): Stats => {
     let totalShipped = 0;
     let totalDaysWeighted = 0;
     let atRiskSKUs = 0;
+    let totalInventoryValue = 0;
+    let capitalAtRisk = 0;
+    let totalPotentialRevenue = 0;
 
     for (const item of data) {
         totalAvailable += item.available;
         totalPending += item.pendingRemoval;
         totalShipped += item.shippedT30;
         totalDaysWeighted += item.totalInvAgeDays * item.available;
+        totalInventoryValue += item.inventoryValue || 0;
+        totalPotentialRevenue += item.potentialRevenue || 0;
         if (item.riskScore > 70) {
             atRiskSKUs++;
+            capitalAtRisk += item.inventoryValue || 0;
         }
     }
     
@@ -94,7 +101,10 @@ export const calculateStats = (data: ProductData[]): Stats => {
       totalShipped,
       avgDaysInventory,
       sellThroughRate,
-      atRiskSKUs
+      atRiskSKUs,
+      totalInventoryValue,
+      capitalAtRisk,
+      totalPotentialRevenue
     };
 };
 
@@ -110,6 +120,7 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
                 shippedChange: newItem.shippedT30 - oldItem.shippedT30,
                 ageChange: newItem.totalInvAgeDays - oldItem.totalInvAgeDays,
                 riskScoreChange: newItem.riskScore - oldItem.riskScore,
+                inventoryValueChange: (newItem.inventoryValue || 0) - (oldItem.inventoryValue || 0),
             };
         }
         return {
@@ -118,6 +129,7 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
             shippedChange: newItem.shippedT30,
             ageChange: newItem.totalInvAgeDays,
             riskScoreChange: newItem.riskScore,
+            inventoryValueChange: newItem.inventoryValue,
         };
     });
 };

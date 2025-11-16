@@ -4,8 +4,12 @@ import type { ProductData } from '../types';
 const summarizeDataForPrompt = (data: ProductData[]): string => {
     const totalSKUs = data.length;
     const totalUnits = data.reduce((sum, item) => sum + item.available, 0);
+    const totalInventoryValue = data.reduce((sum, item) => sum + (item.inventoryValue || 0), 0);
 
-    const atRisk = data.filter(d => d.riskScore > 70).sort((a, b) => b.riskScore - a.riskScore).slice(0, 5);
+    const atRisk = data.filter(d => d.riskScore > 70);
+    const capitalAtRisk = atRisk.reduce((sum, item) => sum + (item.inventoryValue || 0), 0);
+    const topAtRiskByValue = atRisk.sort((a, b) => (b.inventoryValue || 0) - (a.inventoryValue || 0)).slice(0, 5);
+
     const hotItems = data.filter(d => d.sellThroughRate > 70).sort((a, b) => b.sellThroughRate - a.sellThroughRate).slice(0, 5);
     const agedInventory = data.filter(d => d.totalInvAgeDays > 180).sort((a, b) => b.totalInvAgeDays - a.totalInvAgeDays).slice(0, 5);
 
@@ -13,9 +17,11 @@ const summarizeDataForPrompt = (data: ProductData[]): string => {
     FBA Inventory Analysis Report:
     - Total SKUs: ${totalSKUs}
     - Total Available Units: ${totalUnits}
+    - Total Inventory Value: $${Math.round(totalInventoryValue).toLocaleString()}
+    - Total Capital At Risk (Risk Score > 70): $${Math.round(capitalAtRisk).toLocaleString()}
 
-    Top 5 High-Risk SKUs (by risk score):
-    ${atRisk.map(d => `- SKU: ${d.sku}, Risk Score: ${d.riskScore}, Available: ${d.available}, Avg Age: ${d.totalInvAgeDays} days`).join('\n') || 'None'}
+    Top 5 At-Risk SKUs (by inventory value):
+    ${topAtRiskByValue.map(d => `- SKU: ${d.sku}, Inv. Value: $${Math.round(d.inventoryValue || 0).toLocaleString()}, Risk: ${d.riskScore}, Units: ${d.available}`).join('\n') || 'None'}
 
     Top 5 Hot-Selling SKUs (by sell-through rate):
     ${hotItems.map(d => `- SKU: ${d.sku}, Sell-Through: ${d.sellThroughRate}%, Available: ${d.available}`).join('\n') || 'None'}
@@ -41,7 +47,7 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
         const prompt = `
         You are WesBI, an expert FBA (Fulfillment by Amazon) operations analyst.
         Based on the following FBA inventory data summary, provide 3 to 5 concise, actionable business insights.
-        Focus on opportunities to increase profit, reduce fees, and improve inventory health.
+        Focus on opportunities to increase profit, reduce fees, unlock cash flow, and improve inventory health.
         Do not repeat the data summary. Provide only the insights.
 
         Data Summary:

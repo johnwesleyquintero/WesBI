@@ -18,6 +18,15 @@ import ToastContainer from './components/ToastContainer';
 import { useAppContext } from './state/appContext';
 import { useFilteredData } from './hooks/useFilteredData';
 
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value);
+};
+
 const App: React.FC = () => {
     const { state } = useAppContext();
     const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
@@ -73,6 +82,7 @@ const App: React.FC = () => {
     }, [isComparisonMode, comparisonSnapshotKeys, snapshots]);
 
     const displayedStats = useMemo(() => {
+        const defaultChange = { totalProducts: 0, totalAvailable: 0, atRiskSKUs: 0, avgDaysInventory: 0, sellThroughRate: 0, totalPending: 0, totalInventoryValue: 0, capitalAtRisk: 0, totalPotentialRevenue: 0 };
         if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
              const oldSnap = snapshots[comparisonSnapshotKeys.base];
              const newSnap = snapshots[comparisonSnapshotKeys.compare];
@@ -86,11 +96,14 @@ const App: React.FC = () => {
                         avgDaysInventory: newSnap.stats.avgDaysInventory - oldSnap.stats.avgDaysInventory,
                         sellThroughRate: newSnap.stats.sellThroughRate - oldSnap.stats.sellThroughRate,
                         totalPending: newSnap.stats.totalPending - oldSnap.stats.totalPending,
+                        totalInventoryValue: newSnap.stats.totalInventoryValue - oldSnap.stats.totalInventoryValue,
+                        capitalAtRisk: newSnap.stats.capitalAtRisk - oldSnap.stats.capitalAtRisk,
+                        totalPotentialRevenue: newSnap.stats.totalPotentialRevenue - oldSnap.stats.totalPotentialRevenue,
                     }
                  };
              }
         }
-        return activeSnapshot ? { current: activeSnapshot.stats, change: { totalProducts: 0, totalAvailable: 0, atRiskSKUs: 0, avgDaysInventory: 0, sellThroughRate: 0, totalPending: 0 } } : null;
+        return activeSnapshot ? { current: activeSnapshot.stats, change: defaultChange } : null;
     }, [activeSnapshot, isComparisonMode, snapshots, comparisonSnapshotKeys]);
     
     return (
@@ -134,11 +147,11 @@ const App: React.FC = () => {
                         {displayedStats && (
                             <ErrorBoundary>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
-                                    <StatCard label="Total Products" value={displayedStats.current.totalProducts.toLocaleString()} change={displayedStats.change.totalProducts} />
+                                    <StatCard label="Inventory Value" value={formatCurrency(displayedStats.current.totalInventoryValue)} change={displayedStats.change.totalInventoryValue} />
+                                    <StatCard label="Capital at Risk" value={formatCurrency(displayedStats.current.capitalAtRisk)} change={displayedStats.change.capitalAtRisk} />
                                     <StatCard label="Available Inventory" value={displayedStats.current.totalAvailable.toLocaleString()} change={displayedStats.change.totalAvailable} />
-                                    <StatCard label="Pending Removals" value={displayedStats.current.totalPending.toLocaleString()} change={displayedStats.change.totalPending} />
                                     <StatCard label="Sell-Through" value={`${displayedStats.current.sellThroughRate}%`} change={displayedStats.change.sellThroughRate} isPercentage={true} />
-                                    <StatCard label="Avg Days in Inv." value={displayedStats.current.avgDaysInventory.toString()} change={displayedStats.change.avgDaysInventory} />
+                                    <StatCard label="Potential Revenue" value={formatCurrency(displayedStats.current.totalPotentialRevenue)} change={displayedStats.change.totalPotentialRevenue} />
                                     <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
                                 </div>
                             </ErrorBoundary>

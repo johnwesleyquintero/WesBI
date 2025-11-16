@@ -18,11 +18,20 @@ export interface ProductData {
   riskScore: number; // calculated field
   category: string;
   restockRecommendation?: number; // calculated field
+
+  // --- NEW: Financial Data ---
+  cogs?: number; // Cost of Goods Sold
+  price?: number; // Sale Price
+  inventoryValue?: number; // available * cogs
+  potentialRevenue?: number; // available * price
+  grossProfitPerUnit?: number; // price - cogs
+
   // For comparison
   inventoryChange?: number;
   shippedChange?: number;
   ageChange?: number;
   riskScoreChange?: number;
+  inventoryValueChange?: number; // NEW
 }
 
 export interface Stats {
@@ -33,6 +42,11 @@ export interface Stats {
   avgDaysInventory: number;
   sellThroughRate: number;
   atRiskSKUs: number;
+
+  // --- NEW: Financial Stats ---
+  totalInventoryValue: number;
+  capitalAtRisk: number;
+  totalPotentialRevenue: number;
 }
 
 export interface Snapshot {
