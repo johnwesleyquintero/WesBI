@@ -73,6 +73,13 @@ const Controls: React.FC = () => {
         exportToCSV(filteredData, `wesbi_export_${mode}_${timestamp}.csv`);
     }, [filteredData, isComparisonMode]);
 
+    const handleSnapshotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        dispatch({ type: 'SET_ACTIVE_SNAPSHOT', payload: e.target.value });
+    };
+
+    const handleCompareClick = () => {
+        dispatch({ type: 'OPEN_COMPARISON_MODAL' });
+    };
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(Boolean).length;
@@ -87,7 +94,7 @@ const Controls: React.FC = () => {
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <ControlButton 
                     onClick={() => fileInputRef.current?.click()} 
                     className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]"
@@ -104,12 +111,29 @@ const Controls: React.FC = () => {
                     onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
                     aria-label="Upload FBA Snapshot CSV files"
                 />
-                <ControlButton onClick={() => dispatch({ type: 'SET_COMPARISON_MODE', payload: true })} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
-                    <CompareIcon /> Compare
+                <ControlButton onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
+                    <CompareIcon /> Compare...
                 </ControlButton>
                 <ControlButton onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
                     <ExportIcon /> Export
                 </ControlButton>
+                 {Object.keys(snapshots).length > 0 && (
+                    <div className="lg:col-span-1">
+                        <label htmlFor="snapshot-select" className="sr-only">Active Snapshot</label>
+                        <select 
+                            id="snapshot-select" 
+                            value={activeSnapshotKey || ''} 
+                            onChange={handleSnapshotChange}
+                            disabled={isComparisonMode}
+                            className="w-full h-full px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-sm border border-gray-300 focus:ring-2 focus:ring-[#9c4dff] focus:outline-none disabled:bg-gray-200 disabled:cursor-not-allowed filter-select"
+                        >
+                            <option value="" disabled>Select a snapshot</option>
+                            {Object.keys(snapshots).sort().map(key => (
+                                <option key={key} value={key}>{snapshots[key].name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
             
             <div className="space-y-4 pt-4 border-t border-gray-200">

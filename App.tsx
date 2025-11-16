@@ -8,6 +8,7 @@ import DataTable from './components/DataTable';
 import Pagination from './components/Pagination';
 import Loader from './components/Loader';
 import ComparisonView from './components/ComparisonView';
+import ComparisonModal from './components/ComparisonModal';
 import InsightsPanel from './components/InsightsPanel';
 import { BarChartIcon } from './components/Icons';
 import { useAppContext } from './state/appContext';
@@ -17,7 +18,7 @@ const ITEMS_PER_PAGE = 30;
 
 const App: React.FC = () => {
     const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, comparisonSnapshotKeys } = state;
 
     const filteredAndSortedData = useFilteredData();
     
@@ -30,12 +31,20 @@ const App: React.FC = () => {
 
     const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
 
+    const comparisonInfo = useMemo(() => {
+        if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
+            const baseName = snapshots[comparisonSnapshotKeys.base]?.name ?? '...';
+            const compareName = snapshots[comparisonSnapshotKeys.compare]?.name ?? '...';
+            return `Comparing "${baseName}" with "${compareName}"`;
+        }
+        return 'Comparing snapshots.'; // Fallback
+    }, [isComparisonMode, comparisonSnapshotKeys, snapshots]);
+
     const displayedStats = useMemo(() => {
-        if (isComparisonMode) {
-             const keys = Object.keys(snapshots).sort();
-             if (keys.length >= 2) {
-                 const newSnap = snapshots[keys[keys.length-1]];
-                 const oldSnap = snapshots[keys[keys.length-2]];
+        if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
+             const oldSnap = snapshots[comparisonSnapshotKeys.base];
+             const newSnap = snapshots[comparisonSnapshotKeys.compare];
+             if (oldSnap && newSnap) {
                  return {
                     current: newSnap.stats,
                     change: {
@@ -50,17 +59,16 @@ const App: React.FC = () => {
              }
         }
         return activeSnapshot ? { current: activeSnapshot.stats, change: { totalProducts: 0, totalAvailable: 0, atRiskSKUs: 0, avgDaysInventory: 0, sellThroughRate: 0, totalPending: 0 } } : null;
-    }, [activeSnapshot, isComparisonMode, snapshots]);
+    }, [activeSnapshot, isComparisonMode, snapshots, comparisonSnapshotKeys]);
     
     return (
         <div className="p-4 md:p-8">
             <div className="max-w-screen-2xl mx-auto bg-white rounded-2xl shadow-2xl shadow-gray-300/30 overflow-hidden relative">
                 <Loader loadingState={loadingState} />
+                {isComparisonModalOpen && <ComparisonModal />}
                 <Header />
                 {isComparisonMode && (
-                    <ComparisonView 
-                        info={`Comparing latest two snapshots.`}
-                    />
+                    <ComparisonView info={comparisonInfo} />
                 )}
                 <Controls />
                 
@@ -77,7 +85,7 @@ const App: React.FC = () => {
                     </div>
                 )}
                 
-                {activeSnapshot && (
+                {activeSnapshot && !isComparisonMode && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
                         <AgeDistributionChart data={activeSnapshot.data} />
                         <RiskChart data={activeSnapshot.data} />
@@ -85,7 +93,7 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                {activeSnapshot ? (
+                {filteredAndSortedData.length > 0 ? (
                     <>
                         <DataTable data={paginatedData} />
                         <Pagination totalPages={totalPages} />

@@ -1,73 +1,44 @@
 import type { ProductData } from '../types';
-import { calculateRiskScore } from './dataProcessor';
 
-const parseAndProcessData = (results: any[]): ProductData[] => {
-    return results.map((row: any) => {
-        const available = Number(row['available'] || 0);
-        const shippedT30 = Number(row['units-shipped-t30'] || 0);
+// The original parsing logic (parseAndProcessData) has been moved into `worker.js`
+// to offload heavy computation from the main thread and prevent UI freezing.
 
-        const invAge0to90 = Number(row['inv-age-0-to-90-days'] || 0);
-        const invAge91to180 = Number(row['inv-age-91-to-180-days'] || 0);
-        const invAge181to270 = Number(row['inv-age-181-to-270-days'] || 0);
-        const invAge271to365 = Number(row['inv-age-271-to-365-days'] || 0);
-        const invAge365plus = Number(row['inv-age-365-plus-days'] || 0);
-
-        const totalInv = invAge0to90 + invAge91to180 + invAge181to270 + invAge271to365 + invAge365plus;
-        const avgAge = totalInv > 0 ? (
-            (invAge0to90 * 45) +
-            (invAge91to180 * 135) +
-            (invAge181to270 * 225) +
-            (invAge271to365 * 318) +
-            (invAge365plus * 400) 
-        ) / totalInv : 0;
-        
-        // FIX: Removed `timestamp` property from the object below as it does not exist on the ProductData type.
-        // The timestamp is correctly associated with a Snapshot in App.tsx.
-        const partialData: Omit<ProductData, 'riskScore'> = {
-            sku: row['sku'] || '',
-            asin: row['asin'] || '',
-            name: row['product-name'] || '',
-            condition: row['condition'] || '',
-            available: available,
-            pendingRemoval: Number(row['pending-removal-quantity'] || 0),
-            invAge0to90,
-            invAge91to180,
-            invAge181to270,
-            invAge271to365,
-            invAge365plus,
-            totalInvAgeDays: Math.round(avgAge),
-            shippedT30: shippedT30,
-            sellThroughRate: available > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0,
-            recommendedAction: row['recommended-action'] || 'No Action',
-            category: row['category'] || 'Unknown',
-        };
-
-        const riskScore = calculateRiskScore(partialData as ProductData);
-
-        return { ...partialData, riskScore };
-    });
-};
-
+/**
+ * Parses a CSV file using a Web Worker to avoid blocking the main UI thread.
+ * It delegates the file to the worker and returns a promise that resolves with
+ * the processed data or rejects if an error occurs.
+ * @param {File} file - The CSV file to be parsed.
+ * @returns {Promise<ProductData[]>} A promise that resolves to an array of processed product data.
+ */
 export const parseCSV = (file: File): Promise<ProductData[]> => {
     return new Promise((resolve, reject) => {
-        if (!window.Papa) {
-            return reject(new Error("PapaParse library is not loaded."));
-        }
-        window.Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results: any) => {
-                if(results.errors.length > 0) {
-                    console.error('CSV parsing errors:', results.errors);
-                    return reject(new Error('Failed to parse CSV file.'));
-                }
-                const processedData = parseAndProcessData(results.data);
-                resolve(processedData);
-            },
-            error: (error: Error) => {
-                console.error('CSV parsing error:', error);
-                reject(error);
+        // Create a new worker. The worker script is expected to be served from the public root directory.
+        const worker = new Worker('/worker.js');
+
+        // Handle messages received from the worker.
+        worker.onmessage = (event: MessageEvent) => {
+            // The worker will send an object with either a 'data' key on success
+            // or an 'error' key on failure.
+            if (event.data.error) {
+                console.error('Error from CSV Worker:', event.data.error, event.data.details || '');
+                reject(new Error(event.data.error));
+            } else {
+                // Resolve the promise with the successfully parsed and processed data.
+                resolve(event.data.data as ProductData[]);
             }
-        });
+            // Terminate the worker to free up system resources once the job is complete.
+            worker.terminate();
+        };
+
+        // Handle any critical errors that occur during worker initialization or execution.
+        worker.onerror = (error: ErrorEvent) => {
+            console.error('An unrecoverable error occurred in the CSV Worker:', error);
+            reject(new Error(`Worker error: ${error.message}`));
+            // Ensure the worker is terminated in case of an unhandled error.
+            worker.terminate();
+        };
+        
+        // Send the file to the worker to initiate the parsing process.
+        worker.postMessage(file);
     });
 };

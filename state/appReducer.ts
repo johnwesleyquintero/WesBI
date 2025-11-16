@@ -6,6 +6,8 @@ export interface AppState {
     activeSnapshotKey: string | null;
     loadingState: LoadingState;
     isComparisonMode: boolean;
+    isComparisonModalOpen: boolean;
+    comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
     sortConfig: SortConfig;
@@ -17,6 +19,8 @@ export const initialState: AppState = {
     activeSnapshotKey: null,
     loadingState: { isLoading: false, message: '', progress: 0 },
     isComparisonMode: false,
+    isComparisonModalOpen: false,
+    comparisonSnapshotKeys: { base: null, compare: null },
     insights: [],
     filters: {
         search: '', condition: '', action: '', age: '', category: '',
@@ -31,7 +35,11 @@ export type Action =
     | { type: 'PROCESS_FILES_PROGRESS', payload: { message: string, progress: number } }
     | { type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: Record<string, Snapshot>, latestSnapshotKey: string | null, insights: string[] } }
     | { type: 'PROCESS_FILES_ERROR' }
+    | { type: 'SET_ACTIVE_SNAPSHOT', payload: string }
     | { type: 'SET_COMPARISON_MODE', payload: boolean }
+    | { type: 'OPEN_COMPARISON_MODAL' }
+    | { type: 'CLOSE_COMPARISON_MODAL' }
+    | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
     | { type: 'RESET_FILTERS' }
     | { type: 'UPDATE_SORT', payload: keyof ProductData }
@@ -64,10 +72,32 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 loadingState: { isLoading: false, message: '', progress: 0 },
             };
-        case 'SET_COMPARISON_MODE':
+        case 'SET_ACTIVE_SNAPSHOT':
             return {
                 ...state,
-                isComparisonMode: action.payload,
+                activeSnapshotKey: action.payload,
+                isComparisonMode: false,
+                comparisonSnapshotKeys: { base: null, compare: null },
+            };
+        case 'SET_COMPARISON_MODE':
+            if (action.payload === false) {
+                return {
+                    ...state,
+                    isComparisonMode: false,
+                    comparisonSnapshotKeys: { base: null, compare: null },
+                };
+            }
+            return { ...state, isComparisonMode: true };
+        case 'OPEN_COMPARISON_MODAL':
+            return { ...state, isComparisonModalOpen: true };
+        case 'CLOSE_COMPARISON_MODAL':
+            return { ...state, isComparisonModalOpen: false };
+        case 'START_COMPARISON':
+            return {
+                ...state,
+                isComparisonMode: true,
+                isComparisonModalOpen: false,
+                comparisonSnapshotKeys: action.payload,
                 currentPage: 1,
             };
         case 'UPDATE_FILTER':

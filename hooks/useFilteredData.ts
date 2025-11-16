@@ -13,18 +13,17 @@ import type { ProductData } from '../types';
 
 export const useFilteredData = (): ProductData[] => {
     const { state } = useAppContext();
-    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig } = state;
+    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig, comparisonSnapshotKeys } = state;
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
     return useMemo(() => {
         let data: ProductData[] = [];
-        if (isComparisonMode) {
-             const keys = Object.keys(snapshots).sort();
-             if (keys.length >= 2) {
-                 const newSnap = snapshots[keys[keys.length - 1]];
-                 const oldSnap = snapshots[keys[keys.length - 2]];
-                 data = compareSnapshots(newSnap, oldSnap);
+        if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
+             const oldSnap = snapshots[comparisonSnapshotKeys.base];
+             const newSnap = snapshots[comparisonSnapshotKeys.compare];
+             if (oldSnap && newSnap) {
+                data = compareSnapshots(newSnap, oldSnap);
              }
         } else if (activeSnapshot) {
             data = activeSnapshot.data;
@@ -53,5 +52,5 @@ export const useFilteredData = (): ProductData[] => {
         
         return filtered;
 
-    }, [activeSnapshot, isComparisonMode, snapshots, filters, sortConfig]);
+    }, [activeSnapshot, isComparisonMode, snapshots, filters, sortConfig, comparisonSnapshotKeys]);
 };
