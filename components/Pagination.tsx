@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { ArrowLeftIcon, ArrowRightIcon } from './Icons';
 
 interface PaginationProps {
     currentPage: number;
@@ -50,9 +51,10 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             <button 
                 onClick={() => onPageChange(currentPage - 1)} 
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
             >
-                &larr; Prev
+                <ArrowLeftIcon className="w-4 h-4 mr-1" />
+                Prev
             </button>
             
             {startPage > 1 && renderPageButton(1, 1)}
@@ -66,9 +68,10 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             <button 
                 onClick={() => onPageChange(currentPage + 1)} 
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
             >
-                Next &rarr;
+                Next
+                <ArrowRightIcon className="w-4 h-4 ml-1" />
             </button>
         </div>
     );

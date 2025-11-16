@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ICONS } from '../constants';
+import { LightbulbIcon } from './Icons';
 
 interface InsightsPanelProps {
     insights: string[];
@@ -14,7 +14,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
     return (
         <div className="bg-gray-50 p-6 md:px-8 border-b border-gray-200">
             <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                {ICONS.lightbulb}
+                <LightbulbIcon className="h-6 w-6 mr-2" />
                 AI-Powered Insights
             </h2>
             <div className="space-y-3">

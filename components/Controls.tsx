@@ -1,7 +1,7 @@
 
 import React, { useRef } from 'react';
 import type { Filters } from '../types';
-import { ICONS } from '../constants';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
 
 interface ControlsProps {
     onProcessFiles: (files: FileList) => void;
@@ -60,19 +60,19 @@ const Controls: React.FC<ControlsProps> = ({
                     />
                 </div>
                 <ControlButton onClick={() => fileInputRef.current?.files && onProcessFiles(fileInputRef.current.files)} className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]">
-                    {ICONS.rocket} Process
+                    <RocketIcon /> Process
                 </ControlButton>
                 <ControlButton onClick={onCompare} disabled={snapshotCount < 2} className="bg-blue-500 text-white hover:bg-blue-600">
-                    {ICONS.compare} Compare
+                    <CompareIcon /> Compare
                 </ControlButton>
                 <ControlButton onClick={onExport} disabled={snapshotCount < 1} className="bg-green-500 text-white hover:bg-green-600">
-                    {ICONS.export} Export
+                    <ExportIcon /> Export
                 </ControlButton>
             </div>
             
             <div className="space-y-4 pt-4 border-t border-gray-200">
                 <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{ICONS.search}</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
                     <input 
                         type="text" 
                         value={filters.search}

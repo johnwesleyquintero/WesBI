@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { ChevronUpIcon, ChevronDownIcon } from './Icons';
 
 interface StatCardProps {
     label: string;
@@ -21,8 +22,9 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, change, isPercentage 
                 <div className="text-3xl font-bold text-[#7a33ff]">{value}</div>
             </div>
             <div className="mt-2">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${changeColorClasses}`}>
-                    {isPositive ? '▲' : '▼'} {changeText}
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center justify-center ${changeColorClasses}`}>
+                    {isPositive ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
+                    <span className="ml-1">{changeText}</span>
                 </span>
             </div>
         </div>

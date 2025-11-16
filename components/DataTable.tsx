@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { ProductData, SortConfig } from '../types';
+import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
 
 interface DataTableProps {
     data: ProductData[];
@@ -17,11 +18,17 @@ const SortableHeader: React.FC<{
     className?: string;
 }> = ({ columnKey, title, sortConfig, onSort, className = '' }) => {
     const isSorted = sortConfig.key === columnKey;
-    const directionIcon = sortConfig.direction === 'asc' ? '▲' : '▼';
-
+    
     return (
         <th className={`cursor-pointer select-none ${className}`} onClick={() => onSort(columnKey)}>
-            {title} {isSorted && <span className="text-[#9c4dff]">{directionIcon}</span>}
+            <span className="inline-flex items-center">
+                {title}
+                {isSorted && (
+                    <span className="text-[#9c4dff] ml-1">
+                        {sortConfig.direction === 'asc' ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    </span>
+                )}
+            </span>
         </th>
     );
 };
@@ -125,8 +132,8 @@ const DataTable: React.FC<DataTableProps> = ({ data, sortConfig, onSort, isCompa
                     ) : (
                         <tr>
                             <td colSpan={headers.length} className="text-center py-16 text-gray-500">
-                                <div className="text-xl">📁</div>
-                                <div>No products match your filters.</div>
+                                <FileIcon className="w-12 h-12 mx-auto text-gray-400" />
+                                <div className="mt-2">No products match your filters.</div>
                                 <div className="text-xs mt-1">Try adjusting your search or filters.</div>
                             </td>
                         </tr>

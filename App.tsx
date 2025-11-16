@@ -8,12 +8,14 @@ import Pagination from './components/Pagination';
 import Loader from './components/Loader';
 import ComparisonView from './components/ComparisonView';
 import InsightsPanel from './components/InsightsPanel';
+import { BarChartIcon } from './components/Icons';
 import { parseCSV } from './services/csvParser';
 import { calculateStats, compareSnapshots } from './services/dataProcessor';
 import { getInsightsFromGemini } from './services/geminiService';
-import { ITEMS_PER_PAGE } from './constants';
 
 import type { ProductData, Stats, Snapshot, LoadingState, Filters, SortConfig } from './types';
+
+const ITEMS_PER_PAGE = 30;
 
 const App: React.FC = () => {
     const [snapshots, setSnapshots] = useState<Record<string, Snapshot>>({});
@@ -228,7 +230,7 @@ const App: React.FC = () => {
                 
                 {filteredAndSortedData.length === 0 && !activeSnapshot && (
                      <div className="text-center py-20 text-gray-500 bg-gray-50">
-                        <div className="text-4xl mb-4">📊</div>
+                        <BarChartIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                         <h2 className="text-xl font-semibold">Welcome to WesBI</h2>
                         <p className="mt-2">Upload one or more FBA Snapshot CSV files to get started.</p>
                     </div>

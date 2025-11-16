@@ -1,4 +1,4 @@
-# 📊 WesBI - FBA Intelligence Cockpit
+# WesBI - FBA Intelligence Cockpit
 
 An advanced FBA intelligence cockpit for real-time Amazon operations analytics. This tool empowers Amazon FBA sellers to transform raw inventory snapshot CSVs into a strategic command center. Analyze inventory health, sales performance, and potential risks with a powerful dashboard, and leverage AI-powered insights to make smarter, data-driven decisions that boost profitability.
 
@@ -6,19 +6,19 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
 
 ## ✨ Key Features
 
-*   **📊 Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like total inventory value, sell-through rate, average inventory age, and at-risk SKUs.
-*   **🧠 AI-Powered Insights (Gemini):** Automatically generate concise, actionable business insights from your data. The system analyzes your inventory summary and provides recommendations to increase profit, reduce fees, and improve overall inventory health.
-*   **📈 Rich Data Visualization:**
+*   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like total inventory value, sell-through rate, average inventory age, and at-risk SKUs.
+*   **AI-Powered Insights (Gemini):** Automatically generate concise, actionable business insights from your data. The system analyzes your inventory summary and provides recommendations to increase profit, reduce fees, and improve overall inventory health.
+*   **Rich Data Visualization:**
     *   **Inventory Age Distribution:** Instantly see how much of your stock is aging and identify potential long-term storage fee risks.
     *   **Top At-Risk SKUs:** A bar chart highlighting products with the highest risk scores, helping you prioritize action.
     *   **Sell-Through Performance:** Identify your fastest-moving products to inform restocking and marketing decisions.
-*   **🔄 Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See deltas for inventory levels, sales velocity, and risk scores on a per-SKU basis.
-*   **📁 Multi-File Processing:** Upload and process multiple FBA snapshot CSVs at once. The system intelligently merges the data, allowing for a consolidated view of your inventory.
-*   **🚀 Powerful Data Table:**
+*   **Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See deltas for inventory levels, sales velocity, and risk scores on a per-SKU basis.
+*   **Multi-File Processing:** Upload and process multiple FBA snapshot CSVs at once. The system intelligently merges the data, allowing for a consolidated view of your inventory.
+*   **Powerful Data Table:**
     *   **Advanced Filtering:** Drill down into your data by SKU, ASIN, product name, inventory age, stock status, and recommended action.
     *   **Dynamic Sorting:** Sort your entire dataset by any metric to quickly find what you need.
     *   **Conditional Highlighting:** Rows are automatically color-coded based on risk score, sales velocity, and recommended actions, drawing your attention to the most critical items.
-*   **📱 Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
+*   **Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
 
 ## 🛠️ Technology Stack
 
