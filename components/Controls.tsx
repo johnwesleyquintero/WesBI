@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import type { Filters } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
@@ -43,26 +42,23 @@ const Controls: React.FC<ControlsProps> = ({
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative col-span-1 md:col-span-2 lg:col-span-1">
-                    <label htmlFor="csvFile" className="absolute left-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-[#9c4dff] text-white rounded-md font-semibold cursor-pointer hover:bg-[#7a33ff] transition-colors">
-                        Choose Files
-                    </label>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        id="csvFile"
-                        accept=".csv"
-                        multiple
-                        onChange={handleFileChange}
-                        className="w-full pl-32 pr-3 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:border-[#9c4dff]"
-                        onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
-                        aria-label="Upload FBA Snapshot CSV files"
-                    />
-                </div>
-                <ControlButton onClick={() => fileInputRef.current?.files && onProcessFiles(fileInputRef.current.files)} className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]">
-                    <RocketIcon /> Process
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <ControlButton 
+                    onClick={() => fileInputRef.current?.click()} 
+                    className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]"
+                >
+                    <RocketIcon /> Upload &amp; Process
                 </ControlButton>
+                 <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                    onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
+                    aria-label="Upload FBA Snapshot CSV files"
+                />
                 <ControlButton onClick={onCompare} disabled={snapshotCount < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                     <CompareIcon /> Compare
                 </ControlButton>
