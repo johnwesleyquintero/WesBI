@@ -1,0 +1,5 @@
+{
+  "name": "WesBI Beast Mode - FBA Intelligence Cockpit",
+  "description": "An advanced FBA intelligence cockpit for real-time Amazon operations analytics. Upload FBA snapshot CSVs to analyze inventory, performance, and risk, with AI-powered insights to optimize your business.",
+  "requestFramePermissions": []
+}
