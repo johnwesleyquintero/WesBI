@@ -7,7 +7,8 @@ import {
     applyActionFilter, 
     applyAgeFilter, 
     applyStockStatusFilter, 
-    applyMinStockFilter 
+    applyMinStockFilter,
+    applyMaxStockFilter
 } from '../services/filterUtils';
 import type { ProductData } from '../types';
 
@@ -37,6 +38,7 @@ export const useFilteredData = (): ProductData[] => {
         filtered = applyAgeFilter(filtered, filters.age);
         filtered = applyStockStatusFilter(filtered, filters.stockStatus);
         filtered = applyMinStockFilter(filtered, filters.minStock);
+        filtered = applyMaxStockFilter(filtered, filters.maxStock);
 
         if (sortConfig.key) {
             const sorted = [...filtered].sort((a, b) => {

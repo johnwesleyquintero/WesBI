@@ -150,7 +150,7 @@ const Controls: React.FC = () => {
                         }`}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                     <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => handleFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>
@@ -170,6 +170,7 @@ const Controls: React.FC = () => {
                         <option value="stranded">Stranded</option>
                     </select>
                     <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => handleFilterChange('minStock', e.target.value)} placeholder="Min Stock" className={getFilterClass(!!filters.minStock)} />
+                    <input aria-label="Maximum stock level" type="number" value={filters.maxStock} onChange={(e) => handleFilterChange('maxStock', e.target.value)} placeholder="Max Stock" className={getFilterClass(!!filters.maxStock)} />
                     <button 
                         onClick={() => dispatch({ type: 'RESET_FILTERS' })}
                         disabled={activeFilterCount === 0}

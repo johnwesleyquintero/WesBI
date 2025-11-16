@@ -1,3 +1,4 @@
+
 import type { ProductData } from '../types';
 
 export const applySearchFilter = (data: ProductData[], search: string): ProductData[] => {
@@ -56,4 +57,11 @@ export const applyMinStockFilter = (data: ProductData[], minStock: string): Prod
     const min = parseInt(minStock);
     if (isNaN(min)) return data;
     return data.filter(item => item.available >= min);
+};
+
+export const applyMaxStockFilter = (data: ProductData[], maxStock: string): ProductData[] => {
+    if (!maxStock) return data;
+    const max = parseInt(maxStock);
+    if (isNaN(max)) return data;
+    return data.filter(item => item.available <= max);
 };
