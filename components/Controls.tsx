@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import type { Filters } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
 
@@ -41,6 +41,17 @@ const Controls: React.FC<ControlsProps> = ({
             onProcessFiles(e.target.files);
         }
     };
+
+    const activeFilterCount = useMemo(() => {
+        return [filters.search, filters.action, filters.age, filters.stockStatus, filters.minStock].filter(Boolean).length;
+    }, [filters]);
+
+    const getFilterClass = (isActive: boolean) => {
+        const baseClass = 'filter-select transition-colors duration-200';
+        return isActive 
+            ? `${baseClass} border-[#9c4dff] bg-purple-50/50 ring-1 ring-purple-300` 
+            : `${baseClass} border-gray-300`;
+    };
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
@@ -78,37 +89,49 @@ const Controls: React.FC<ControlsProps> = ({
                         onChange={(e) => onFilterChange('search', e.target.value)}
                         placeholder="Search by SKU, ASIN, or Product Name..."
                         aria-label="Search by SKU, ASIN, or Product Name"
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm"
+                        className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm transition-colors duration-200 ${
+                            filters.search ? 'border-[#9c4dff] bg-purple-50/50' : 'border-gray-300'
+                        }`}
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => onFilterChange('age', e.target.value)} className="filter-select">
+                    <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => onFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>
                         <option value="91-180">91-180 days</option>
                         <option value="181-365">181-365 days</option>
                         <option value="365+">365+ days</option>
                     </select>
-                    <select aria-label="Filter by recommended action" value={filters.action} onChange={(e) => onFilterChange('action', e.target.value)} className="filter-select">
+                    <select aria-label="Filter by recommended action" value={filters.action} onChange={(e) => onFilterChange('action', e.target.value)} className={getFilterClass(!!filters.action)}>
                         <option value="">All Actions</option>
                         <option value="removal">Recommended Removal</option>
                         <option value="normal">No Action</option>
                     </select>
-                     <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => onFilterChange('stockStatus', e.target.value)} className="filter-select">
+                     <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => onFilterChange('stockStatus', e.target.value)} className={getFilterClass(!!filters.stockStatus)}>
                         <option value="">Stock Status</option>
                         <option value="low">Low Stock</option>
                         <option value="high">High Stock</option>
                         <option value="stranded">Stranded</option>
                     </select>
-                    <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => onFilterChange('minStock', e.target.value)} placeholder="Min Stock" className="filter-select" />
-                    <button onClick={onResetFilters} className="px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-semibold text-sm">Reset</button>
+                    <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => onFilterChange('minStock', e.target.value)} placeholder="Min Stock" className={getFilterClass(!!filters.minStock)} />
+                    <button 
+                        onClick={onResetFilters}
+                        disabled={activeFilterCount === 0}
+                        className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 ${
+                            activeFilterCount > 0
+                                ? 'bg-[#6c34ff] text-white hover:bg-purple-700'
+                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }`}
+                    >
+                        Reset {activeFilterCount > 0 && `(${activeFilterCount})`}
+                    </button>
                 </div>
             </div>
             <style>{`
                 .filter-select {
                     width: 100%;
                     padding: 0.625rem 0.75rem;
-                    border: 1px solid #d1d5db;
+                    /* border is handled by Tailwind classes now */
                     border-radius: 0.5rem;
                     background-color: white;
                     font-size: 0.875rem;
@@ -120,6 +143,13 @@ const Controls: React.FC<ControlsProps> = ({
                     background-position: right 0.5rem center;
                     background-repeat: no-repeat;
                     background-size: 1.5em 1.5em;
+                }
+                .filter-select:focus {
+                    outline: none;
+                    --tw-ring-color: #9c4dff;
+                    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+                    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+                    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
                 }
             `}</style>
         </div>

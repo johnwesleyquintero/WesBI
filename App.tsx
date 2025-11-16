@@ -241,17 +241,18 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                <DataTable data={paginatedData} sortConfig={sortConfig} onSort={handleSort} isComparisonMode={isComparisonMode} />
-                
-                {filteredAndSortedData.length === 0 && !activeSnapshot && (
+                {activeSnapshot ? (
+                    <>
+                        <DataTable data={paginatedData} sortConfig={sortConfig} onSort={handleSort} isComparisonMode={isComparisonMode} />
+                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    </>
+                ) : (
                      <div className="text-center py-20 text-gray-500 bg-gray-50">
                         <BarChartIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                         <h2 className="text-xl font-semibold">Welcome to WesBI</h2>
                         <p className="mt-2">Upload one or more FBA Snapshot CSV files to get started.</p>
                     </div>
                 )}
-                
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
         </div>
     );
