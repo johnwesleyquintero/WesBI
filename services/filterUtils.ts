@@ -42,14 +42,33 @@ export const applyStockStatusFilter = (data: ProductData[], stockStatus: string)
     if (!stockStatus) return data;
     switch (stockStatus) {
         case 'low':
-            return data.filter(item => item.available < 10 && item.shippedT30 > 0);
+            // Low stock: less than 30 days of cover, and has had sales in the last 30 days.
+            return data.filter(item => {
+                if (item.shippedT30 <= 0) return false;
+                const daysOfCover = item.available / (item.shippedT30 / 30);
+                return daysOfCover < 30;
+            });
         case 'high':
-            return data.filter(item => item.available > 100 && item.shippedT30 < 5);
+             // High stock: more than 180 days of cover, or over 100 units with no sales.
+            return data.filter(item => {
+                if (item.shippedT30 > 0) {
+                    const daysOfCover = item.available / (item.shippedT30 / 30);
+                    return daysOfCover > 180;
+                }
+                // If no sales, consider it high stock if there are many units sitting.
+                return item.available > 100;
+            });
         case 'stranded':
-            return data.filter(item => item.available > 10 && item.shippedT30 === 0);
+            // Stranded: has inventory but no sales in the last 30 days.
+            return data.filter(item => item.available > 0 && item.shippedT30 === 0);
         default:
             return data;
     }
+};
+
+export const applyCategoryFilter = (data: ProductData[], category: string): ProductData[] => {
+    if (!category) return data;
+    return data.filter(item => item.category === category);
 };
 
 export const applyMinStockFilter = (data: ProductData[], minStock: string): ProductData[] => {

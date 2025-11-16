@@ -65,10 +65,12 @@ export interface ForecastSettings {
   demandForecast: number;
 }
 
-export interface SortConfig {
-  key: keyof ProductData | null;
+export interface SortCriterion {
+  key: keyof ProductData;
   direction: 'asc' | 'desc';
 }
+
+export type SortConfig = SortCriterion[];
 
 // Global declarations for CDN libraries
 declare global {

@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -7,7 +8,8 @@ import {
     applyAgeFilter, 
     applyStockStatusFilter, 
     applyMinStockFilter,
-    applyMaxStockFilter
+    applyMaxStockFilter,
+    applyCategoryFilter
 } from '../services/filterUtils';
 import type { ProductData, ForecastSettings } from '../types';
 
@@ -74,17 +76,33 @@ export const useFilteredData = (): ProductData[] => {
         filtered = applySearchFilter(filtered, filters.search);
         filtered = applyActionFilter(filtered, filters.action);
         filtered = applyAgeFilter(filtered, filters.age);
+        filtered = applyCategoryFilter(filtered, filters.category);
         filtered = applyStockStatusFilter(filtered, filters.stockStatus);
         filtered = applyMinStockFilter(filtered, filters.minStock);
         filtered = applyMaxStockFilter(filtered, filters.maxStock);
 
-        if (sortConfig.key) {
+        if (sortConfig.length > 0) {
             const sorted = [...filtered].sort((a, b) => {
-                const aVal = a[sortConfig.key!];
-                const bVal = b[sortConfig.key!];
-                if (aVal === undefined || bVal === undefined) return 0;
-                if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                for (const sort of sortConfig) {
+                    const { key, direction } = sort;
+                    const aVal = a[key];
+                    const bVal = b[key];
+        
+                    if (aVal === undefined || aVal === null) return 1;
+                    if (bVal === undefined || bVal === null) return -1;
+
+                    let comparison = 0;
+                    if (typeof aVal === 'string' && typeof bVal === 'string') {
+                        comparison = aVal.localeCompare(bVal);
+                    } else {
+                        if (aVal < bVal) comparison = -1;
+                        if (aVal > bVal) comparison = 1;
+                    }
+
+                    if (comparison !== 0) {
+                        return direction === 'asc' ? comparison : -comparison;
+                    }
+                }
                 return 0;
             });
             return sorted;

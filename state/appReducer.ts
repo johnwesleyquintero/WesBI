@@ -1,3 +1,4 @@
+
 import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings } from '../types';
 
 export interface AppState {
@@ -34,7 +35,7 @@ export const initialState: AppState = {
         safetyStock: 14,
         demandForecast: 0,
     },
-    sortConfig: { key: 'riskScore', direction: 'desc' },
+    sortConfig: [{ key: 'riskScore', direction: 'desc' }],
     currentPage: 1,
     itemsPerPage: 30,
 };
@@ -54,7 +55,7 @@ export type Action =
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
     | { type: 'RESET_FILTERS' }
     | { type: 'UPDATE_FORECAST_SETTINGS', payload: { key: keyof ForecastSettings, value: number } }
-    | { type: 'UPDATE_SORT', payload: keyof ProductData }
+    | { type: 'UPDATE_SORT', payload: { key: keyof ProductData, shiftKey: boolean } }
     | { type: 'SET_CURRENT_PAGE', payload: number }
     | { type: 'SET_ITEMS_PER_PAGE', payload: number };
 
@@ -135,11 +136,25 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 forecastSettings: { ...state.forecastSettings, [action.payload.key]: action.payload.value }
             };
         case 'UPDATE_SORT': {
-            const newDirection = state.sortConfig.key === action.payload && state.sortConfig.direction === 'asc' ? 'desc' : 'asc';
-            return {
-                ...state,
-                sortConfig: { key: action.payload, direction: newDirection },
-            };
+            const { key, shiftKey } = action.payload;
+            const currentSorts = [...state.sortConfig];
+            const existingSortIndex = currentSorts.findIndex(s => s.key === key);
+
+            if (shiftKey) {
+                if (existingSortIndex > -1) {
+                    // Toggle direction of existing sort
+                    currentSorts[existingSortIndex].direction = currentSorts[existingSortIndex].direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // Add new sort criterion
+                    currentSorts.push({ key, direction: 'asc' });
+                }
+                return { ...state, sortConfig: currentSorts };
+            } else {
+                // Regular click
+                const isCurrentlySorted = existingSortIndex === 0 && currentSorts.length === 1;
+                const newDirection = isCurrentlySorted && currentSorts[0].direction === 'asc' ? 'desc' : 'asc';
+                return { ...state, sortConfig: [{ key, direction: newDirection }] };
+            }
         }
         case 'SET_CURRENT_PAGE':
             return {

@@ -90,6 +90,14 @@ const Controls: React.FC = () => {
         return Object.values(filters).filter(Boolean).length;
     }, [filters]);
 
+    const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
+
+    const uniqueCategories = useMemo(() => {
+        if (!activeSnapshot) return [];
+        const categories = new Set(activeSnapshot.data.map(item => item.category));
+        return Array.from(categories).filter(Boolean).sort();
+    }, [activeSnapshot]);
+
     const getFilterClass = (isActive: boolean) => {
         const baseClass = 'filter-select transition-colors duration-200';
         return isActive 
@@ -155,7 +163,7 @@ const Controls: React.FC = () => {
                         }`}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
                     <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => handleFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>
@@ -167,6 +175,12 @@ const Controls: React.FC = () => {
                         <option value="">All Actions</option>
                         <option value="removal">Recommended Removal</option>
                         <option value="normal">No Action</option>
+                    </select>
+                    <select aria-label="Filter by category" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)} className={getFilterClass(!!filters.category)}>
+                        <option value="">All Categories</option>
+                        {uniqueCategories.map(cat => (
+                           <option key={cat} value={cat}>{cat}</option>
+                        ))}
                     </select>
                      <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => handleFilterChange('stockStatus', e.target.value)} className={getFilterClass(!!filters.stockStatus)}>
                         <option value="">Stock Status</option>

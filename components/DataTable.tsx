@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
@@ -12,18 +12,33 @@ const SortableHeader: React.FC<{
     columnKey: keyof ProductData;
     title: string;
     sortConfig: SortConfig;
-    onSort: (key: keyof ProductData) => void;
+    onSort: (key: keyof ProductData, shiftKey: boolean) => void;
     className?: string;
 }> = ({ columnKey, title, sortConfig, onSort, className = '' }) => {
-    const isSorted = sortConfig.key === columnKey;
+    
+    const sortInfo = useMemo(() => {
+        const index = sortConfig.findIndex(s => s.key === columnKey);
+        if (index === -1) return null;
+        return {
+            direction: sortConfig[index].direction,
+            priority: index + 1
+        };
+    }, [sortConfig, columnKey]);
+    
+    const isSorted = !!sortInfo;
     
     return (
-        <th scope="col" className={`cursor-pointer select-none ${className}`} onClick={() => onSort(columnKey)}>
+        <th scope="col" className={`cursor-pointer select-none ${className}`} onClick={(e) => onSort(columnKey, e.shiftKey)}>
             <span className="inline-flex items-center">
                 {title}
                 {isSorted && (
-                    <span className="text-[#9c4dff] ml-1">
-                        {sortConfig.direction === 'asc' ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    <span className="text-[#9c4dff] ml-1.5 flex items-center gap-1">
+                        {sortInfo.priority > 1 && (
+                            <span className="text-xs font-bold bg-purple-200 text-purple-700 rounded-full w-4 h-4 flex items-center justify-center">
+                                {sortInfo.priority}
+                            </span>
+                        )}
+                        {sortInfo.direction === 'asc' ? <ChevronUpIcon /> : <ChevronDownIcon />}
                     </span>
                 )}
             </span>
@@ -106,8 +121,8 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
     const { state, dispatch } = useAppContext();
     const { sortConfig, isComparisonMode } = state;
 
-    const onSort = (key: keyof ProductData) => {
-        dispatch({ type: 'UPDATE_SORT', payload: key });
+    const onSort = (key: keyof ProductData, shiftKey: boolean) => {
+        dispatch({ type: 'UPDATE_SORT', payload: { key, shiftKey } });
     };
 
     const headers: { key: keyof ProductData; title: string; isNumeric?: boolean }[] = [
