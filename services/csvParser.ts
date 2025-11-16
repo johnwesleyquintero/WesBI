@@ -1,49 +1,44 @@
-
 import type { ProductData } from '../types';
-import { transformRawData } from './dataProcessor';
 
 /**
- * Parses a CSV file using PapaParse's built-in Web Worker.
- * This offloads the heavy parsing from the main UI thread to prevent freezing.
- * The transformation of the data happens on the main thread after parsing is complete.
- * @param {File} file - The CSV file to be parsed.
+ * Parses a CSV file using a dedicated Web Worker (`/worker.js`).
+ * This offloads both the heavy CSV parsing and the subsequent data transformation
+ * from the main UI thread to prevent the application from freezing.
+ * @param {File} file - The CSV file to be parsed and processed.
  * @returns {Promise<ProductData[]>} A promise that resolves to an array of processed product data.
  */
 export const parseCSV = (file: File): Promise<ProductData[]> => {
     return new Promise((resolve, reject) => {
-        if (!window.Papa) {
-            // A guard in case PapaParse fails to load on the main page.
-            return reject(new Error('PapaParse library is not loaded.'));
+        // Check if Worker support is available in the browser.
+        if (typeof Worker === 'undefined') {
+            return reject(new Error('Web Workers are not supported in this browser.'));
         }
 
-        window.Papa.parse(file, {
-            worker: true, // Use PapaParse's built-in worker for parsing
-            header: true,
-            skipEmptyLines: true,
-            complete: (results: { data: any[]; errors: any[] }) => {
-                // The 'results' object comes back from the worker to the main thread.
-                // Now, we process/transform the raw data on the main thread.
-                if (results.errors.length) {
-                    console.error('CSV parsing errors:', results.errors);
-                    // Provide a more specific error message if possible
-                    const errorMsg = results.errors.map(e => e.message).join(', ');
-                    reject(new Error(`Failed to parse CSV file: ${errorMsg}`));
-                    return;
-                }
-                
-                try {
-                    const processedData = transformRawData(results.data);
-                    resolve(processedData);
-                } catch (e) {
-                    console.error('Error processing parsed data:', e);
-                    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred.';
-                    reject(new Error(`Failed to process data after parsing: ${errorMessage}`));
-                }
-            },
-            error: (error: Error) => {
-                console.error('A critical error occurred in the PapaParse worker:', error);
-                reject(error);
+        const worker = new Worker('/worker.js');
+
+        // Set up listener for messages from the worker
+        worker.onmessage = (event) => {
+            if (event.data.error) {
+                // Handle errors sent from the worker
+                console.error('Error from CSV worker:', event.data.details || event.data.error);
+                reject(new Error(event.data.error));
+            } else {
+                // On success, resolve the promise with the processed data
+                resolve(event.data.data);
             }
-        });
+            // Clean up the worker once the job is done
+            worker.terminate();
+        };
+
+        // Set up listener for critical errors in the worker itself
+        worker.onerror = (error) => {
+            console.error('A critical error occurred in the CSV worker:', error);
+            reject(new Error(`Worker error: ${error.message}`));
+            // Clean up the worker on error
+            worker.terminate();
+        };
+
+        // Send the file to the worker to start processing
+        worker.postMessage(file);
     });
 };
