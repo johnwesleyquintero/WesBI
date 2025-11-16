@@ -57,6 +57,7 @@ const Controls: React.FC<ControlsProps> = ({
                         onChange={handleFileChange}
                         className="w-full pl-32 pr-3 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:border-[#9c4dff]"
                         onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
+                        aria-label="Upload FBA Snapshot CSV files"
                     />
                 </div>
                 <ControlButton onClick={() => fileInputRef.current?.files && onProcessFiles(fileInputRef.current.files)} className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]">
@@ -78,29 +79,30 @@ const Controls: React.FC<ControlsProps> = ({
                         value={filters.search}
                         onChange={(e) => onFilterChange('search', e.target.value)}
                         placeholder="Search by SKU, ASIN, or Product Name..."
+                        aria-label="Search by SKU, ASIN, or Product Name"
                         className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm"
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    <select value={filters.age} onChange={(e) => onFilterChange('age', e.target.value)} className="filter-select">
+                    <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => onFilterChange('age', e.target.value)} className="filter-select">
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>
                         <option value="91-180">91-180 days</option>
                         <option value="181-365">181-365 days</option>
                         <option value="365+">365+ days</option>
                     </select>
-                    <select value={filters.action} onChange={(e) => onFilterChange('action', e.target.value)} className="filter-select">
+                    <select aria-label="Filter by recommended action" value={filters.action} onChange={(e) => onFilterChange('action', e.target.value)} className="filter-select">
                         <option value="">All Actions</option>
                         <option value="removal">Recommended Removal</option>
                         <option value="normal">No Action</option>
                     </select>
-                     <select value={filters.stockStatus} onChange={(e) => onFilterChange('stockStatus', e.target.value)} className="filter-select">
+                     <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => onFilterChange('stockStatus', e.target.value)} className="filter-select">
                         <option value="">Stock Status</option>
                         <option value="low">Low Stock</option>
                         <option value="high">High Stock</option>
                         <option value="stranded">Stranded</option>
                     </select>
-                    <input type="number" value={filters.minStock} onChange={(e) => onFilterChange('minStock', e.target.value)} placeholder="Min Stock" className="filter-select" />
+                    <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => onFilterChange('minStock', e.target.value)} placeholder="Min Stock" className="filter-select" />
                     <button onClick={onResetFilters} className="px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg font-semibold text-sm">Reset</button>
                 </div>
             </div>

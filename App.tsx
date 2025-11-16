@@ -12,6 +12,13 @@ import { BarChartIcon } from './components/Icons';
 import { parseCSV } from './services/csvParser';
 import { calculateStats, compareSnapshots } from './services/dataProcessor';
 import { getInsightsFromGemini } from './services/geminiService';
+import { 
+    applySearchFilter, 
+    applyActionFilter, 
+    applyAgeFilter, 
+    applyStockStatusFilter, 
+    applyMinStockFilter 
+} from './services/filterUtils';
 
 import type { ProductData, Stats, Snapshot, LoadingState, Filters, SortConfig } from './types';
 
@@ -99,43 +106,17 @@ const App: React.FC = () => {
 
         if (!data) return [];
         
-        let filtered = data.filter(item => {
-            const searchLower = filters.search.toLowerCase();
-            const matchesSearch = !filters.search || 
-                item.sku.toLowerCase().includes(searchLower) ||
-                item.asin.toLowerCase().includes(searchLower) ||
-                item.name.toLowerCase().includes(searchLower);
-
-            const matchesAction = !filters.action || 
-                (filters.action === 'removal' && item.recommendedAction.toLowerCase().includes('removal')) ||
-                (filters.action === 'normal' && !item.recommendedAction.toLowerCase().includes('removal'));
-            
-            let matchesAge = true;
-            if (filters.age) {
-                switch(filters.age) {
-                    case '0-90': matchesAge = item.totalInvAgeDays <= 90; break;
-                    case '91-180': matchesAge = item.totalInvAgeDays > 90 && item.totalInvAgeDays <= 180; break;
-                    case '181-365': matchesAge = item.totalInvAgeDays > 180 && item.totalInvAgeDays <= 365; break;
-                    case '365+': matchesAge = item.totalInvAgeDays > 365; break;
-                }
-            }
-
-            let matchesStockStatus = true;
-            if (filters.stockStatus) {
-                switch(filters.stockStatus) {
-                case 'low': matchesStockStatus = item.available < 10 && item.shippedT30 > 0; break;
-                case 'high': matchesStockStatus = item.available > 100 && item.shippedT30 < 5; break;
-                case 'stranded': matchesStockStatus = item.available > 10 && item.shippedT30 === 0; break;
-                }
-            }
-
-            const matchesMinStock = !filters.minStock || item.available >= parseInt(filters.minStock);
-            
-            return matchesSearch && matchesAction && matchesAge && matchesStockStatus && matchesMinStock;
-        });
+        // Refactored filtering pipeline
+        let filtered = data;
+        filtered = applySearchFilter(filtered, filters.search);
+        filtered = applyActionFilter(filtered, filters.action);
+        filtered = applyAgeFilter(filtered, filters.age);
+        filtered = applyStockStatusFilter(filtered, filters.stockStatus);
+        filtered = applyMinStockFilter(filtered, filters.minStock);
 
         if (sortConfig.key) {
-            filtered.sort((a, b) => {
+            // Create a new sorted array to avoid mutation
+            const sorted = [...filtered].sort((a, b) => {
                 const aVal = a[sortConfig.key!];
                 const bVal = b[sortConfig.key!];
                 if (aVal === undefined || bVal === undefined) return 0;
@@ -143,6 +124,7 @@ const App: React.FC = () => {
                 if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
                 return 0;
             });
+            return sorted;
         }
         
         return filtered;

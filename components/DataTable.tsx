@@ -20,7 +20,7 @@ const SortableHeader: React.FC<{
     const isSorted = sortConfig.key === columnKey;
     
     return (
-        <th className={`cursor-pointer select-none ${className}`} onClick={() => onSort(columnKey)}>
+        <th scope="col" className={`cursor-pointer select-none ${className}`} onClick={() => onSort(columnKey)}>
             <span className="inline-flex items-center">
                 {title}
                 {isSorted && (
