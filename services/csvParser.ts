@@ -33,7 +33,16 @@ export const parseCSV = (file: File): Promise<ProductData[]> => {
         // Handle any critical errors that occur during worker initialization or execution.
         worker.onerror = (error: ErrorEvent) => {
             console.error('An unrecoverable error occurred in the CSV Worker:', error);
-            reject(new Error(`Worker error: ${error.message}`));
+            
+            // Script loading errors in workers often manifest as generic `Event` types
+            // without a `message` property. This provides a more helpful diagnostic message
+            // pointing to common issues like Content Security Policy (CSP) or network problems.
+            const detailedMessage = error.message 
+                ? `Worker error: ${error.message}`
+                : `An unrecoverable error occurred in the CSV Worker. This is often caused by a failure to load required scripts (like PapaParse) inside the worker. Please check your browser's network tab for failed requests and verify that your Content Security Policy (CSP) allows loading scripts from external CDNs (e.g., cdn.jsdelivr.net).`;
+
+            reject(new Error(detailedMessage));
+            
             // Ensure the worker is terminated in case of an unhandled error.
             worker.terminate();
         };
