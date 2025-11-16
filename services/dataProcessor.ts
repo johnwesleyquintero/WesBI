@@ -10,21 +10,53 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
     let score = 0;
     const { totalInvAgeDays, available, shippedT30, pendingRemoval } = item;
 
-    if (totalInvAgeDays > 365) score += 40;
-    else if (totalInvAgeDays > 180) score += 25;
-    else if (totalInvAgeDays > 90) score += 10;
+    // --- Component 1: Inventory Age (Max 40 points) ---
+    // Older inventory carries higher risk of storage fees and obsolescence.
+    if (totalInvAgeDays > 365) {
+        score += 40;
+    } else if (totalInvAgeDays > 180) {
+        score += 25;
+    } else if (totalInvAgeDays > 90) {
+        score += 15;
+    }
+
+    // --- Component 2: Days of Cover (Supply Days) (Max 40 points) ---
+    // This metric indicates how long the current inventory will last based on recent sales.
+    // It's a powerful indicator of overstocking risk.
+    const dailySales = shippedT30 / 30;
+    if (dailySales <= 0 && available > 0) {
+        // Stranded inventory: stock with no recent sales is a major risk.
+        score += 40;
+    } else if (dailySales > 0) {
+        const daysOfCover = available / dailySales;
+        if (daysOfCover > 180) { // Over 6 months of supply
+            score += 35;
+        } else if (daysOfCover > 90) { // 3-6 months of supply
+            score += 20;
+        } else if (daysOfCover > 60) { // 2-3 months of supply
+            score += 10;
+        }
+    }
+
+    // --- Component 3: Pending Removals (Max 20 points) ---
+    // A high proportion of units pending removal is a strong signal of problematic inventory.
+    const totalStock = available + pendingRemoval;
+    if (totalStock > 0) {
+        const removalRatio = pendingRemoval / totalStock;
+        if (removalRatio > 0.5) { // Over 50% of stock is pending removal
+            score += 20;
+        } else if (removalRatio > 0.2) { // Over 20%
+            score += 10;
+        } else if (removalRatio > 0.1) { // Over 10%
+            score += 5;
+        }
+    }
     
-    const sellThrough = available + shippedT30 > 0 ? (shippedT30 / (available + shippedT30)) * 100 : 0;
-    if (sellThrough < 10) score += 30;
-    else if (sellThrough < 25) score += 20;
-    else if (sellThrough < 50) score += 10;
-    
-    if (pendingRemoval > 10) score += 20;
-    else if (pendingRemoval > 5) score += 10;
-    
-    if (available < 5 && shippedT30 > 20) score += 15;
-    
-    return Math.min(score, 100);
+    // The stockout risk factor has been removed to keep this score focused on
+    // overstocking and inventory stagnation. Stockout risk is handled by the
+    // restock recommendation and stock status filters.
+
+    return Math.min(Math.round(score), 100);
 };
 
 export const calculateStats = (data: ProductData[]): Stats => {
