@@ -1,4 +1,4 @@
-# 🦁 WesBI Beast Mode - FBA Intelligence Cockpit
+# 📊 WesBI - FBA Intelligence Cockpit
 
 An advanced FBA intelligence cockpit for real-time Amazon operations analytics. This tool empowers Amazon FBA sellers to transform raw inventory snapshot CSVs into a strategic command center. Analyze inventory health, sales performance, and potential risks with a powerful dashboard, and leverage AI-powered insights to make smarter, data-driven decisions that boost profitability.
 
@@ -53,4 +53,4 @@ This project is built as a modern, self-contained single-page application, lever
 
 ---
 
-This tool was designed to be a force multiplier for FBA sellers, turning complex data into a clear strategic advantage. Go Beast Mode on your data!
+This tool was designed to be a force multiplier for FBA sellers, turning complex data into a clear strategic advantage. Unlock your data's full potential.

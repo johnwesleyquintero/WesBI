@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
@@ -229,8 +228,8 @@ const App: React.FC = () => {
                 
                 {filteredAndSortedData.length === 0 && !activeSnapshot && (
                      <div className="text-center py-20 text-gray-500 bg-gray-50">
-                        <div className="text-4xl mb-4">🦁</div>
-                        <h2 className="text-xl font-semibold">Welcome to WesBI Beast Mode</h2>
+                        <div className="text-4xl mb-4">📊</div>
+                        <h2 className="text-xl font-semibold">Welcome to WesBI</h2>
                         <p className="mt-2">Upload one or more FBA Snapshot CSV files to get started.</p>
                     </div>
                 )}
