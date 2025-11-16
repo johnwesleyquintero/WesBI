@@ -4,7 +4,7 @@ const LOCAL_STORAGE_KEY = 'wesbi_app_state';
 
 // Define which parts of the AppState should be persisted across sessions.
 // We only save user preferences, not transient data like the loaded snapshots.
-type PersistedState = Pick<AppState, 'filters' | 'forecastSettings' | 'sortConfig' | 'itemsPerPage'>;
+type PersistedState = Pick<AppState, 'filters' | 'forecastSettings' | 'sortConfig' | 'itemsPerPage' | 'apiKey' | 'aiFeaturesEnabled'>;
 
 /**
  * Saves user-configurable state to localStorage. This function is designed to be
@@ -21,6 +21,8 @@ export const saveState = (state: AppState): void => {
       forecastSettings: state.forecastSettings,
       sortConfig: state.sortConfig,
       itemsPerPage: state.itemsPerPage,
+      apiKey: state.apiKey,
+      aiFeaturesEnabled: state.aiFeaturesEnabled,
     };
     const serializedState = JSON.stringify(stateToSave);
     localStorage.setItem(LOCAL_STORAGE_KEY, serializedState);

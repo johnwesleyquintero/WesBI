@@ -1,4 +1,3 @@
-
 import { Dispatch } from 'react';
 import type { Snapshot } from '../types';
 import type { Action } from '../state/appReducer';
@@ -10,6 +9,7 @@ export const processFiles = async (
     files: FileList, 
     currentSnapshots: Record<string, Snapshot>,
     currentActiveKey: string | null,
+    settings: { apiKey: string, aiFeaturesEnabled: boolean },
     dispatch: Dispatch<Action>
 ) => {
     if (files.length === 0) return;
@@ -33,9 +33,9 @@ export const processFiles = async (
         const latestSnapshotKey = Object.keys(newSnapshots).sort().pop() || currentActiveKey;
 
         let newInsights: string[] = [];
-        if (latestSnapshotKey) {
+        if (settings.aiFeaturesEnabled && latestSnapshotKey) {
             dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: 'Generating AI Insights...', progress: 95 }});
-            newInsights = await getInsightsFromGemini(allSnapshots[latestSnapshotKey].data);
+            newInsights = await getInsightsFromGemini(allSnapshots[latestSnapshotKey].data, settings.apiKey);
         }
 
         dispatch({ type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: allSnapshots, latestSnapshotKey, insights: newInsights, filesProcessedCount }});

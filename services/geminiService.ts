@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ProductData } from '../types';
 
@@ -26,20 +25,18 @@ const summarizeDataForPrompt = (data: ProductData[]): string => {
     `;
 };
 
-export const getInsightsFromGemini = async (data: ProductData[]): Promise<string[]> => {
+export const getInsightsFromGemini = async (data: ProductData[], apiKey: string): Promise<string[]> => {
     if (!data || data.length === 0) return [];
     
-    if (!process.env.API_KEY) {
-        console.warn("API_KEY environment variable not set. Returning mock insights.");
+    if (!apiKey) {
+        console.warn("User API_KEY not set. Returning informational insight.");
         return [
-            "SKU with high sell-through but low stock requires immediate reordering to prevent stockouts.",
-            "A significant portion of inventory is aged over 180 days. Consider running a promotional campaign.",
-            "High-risk SKUs are tying up capital. Evaluate liquidating this inventory to improve cash flow."
+            "AI features are enabled, but no Gemini API key is configured. Please add your key in the settings (cog icon) to generate insights.",
         ];
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const dataSummary = summarizeDataForPrompt(data);
         const prompt = `
         You are WesBI, an expert FBA (Fulfillment by Amazon) operations analyst.

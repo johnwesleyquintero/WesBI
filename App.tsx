@@ -9,6 +9,7 @@ import Loader, { StatCardSkeleton, ChartsSkeleton, DataTableSkeleton } from './c
 import ComparisonView from './components/ComparisonView';
 import ComparisonModal from './components/ComparisonModal';
 import HelpModal from './components/HelpModal';
+import SettingsModal from './components/SettingsModal';
 import InsightsPanel from './components/InsightsPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/ToastContainer';
@@ -17,7 +18,7 @@ import { useFilteredData } from './hooks/useFilteredData';
 
 const App: React.FC = () => {
     const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, comparisonSnapshotKeys, itemsPerPage } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled } = state;
 
     // State to track if the Recharts script has been loaded.
     const [rechartsReady, setRechartsReady] = useState(!!window.Recharts);
@@ -97,6 +98,7 @@ const App: React.FC = () => {
                 <Loader loadingState={loadingState} />
                 {isComparisonModalOpen && <ComparisonModal />}
                 {isHelpModalOpen && <HelpModal />}
+                {isSettingsModalOpen && <SettingsModal />}
                 <Header />
                 {isComparisonMode && (
                     <ComparisonView info={comparisonInfo} />
@@ -105,8 +107,8 @@ const App: React.FC = () => {
                     <Controls />
                 </ErrorBoundary>
                 
-                {/* Don't show insights panel during skeleton load */}
-                {!showSkeleton && (
+                {/* Don't show insights panel during skeleton load, and only if enabled */}
+                {!showSkeleton && aiFeaturesEnabled && (
                     <ErrorBoundary>
                         <InsightsPanel insights={insights} />
                     </ErrorBoundary>

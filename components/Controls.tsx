@@ -1,4 +1,3 @@
-
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
@@ -26,7 +25,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, classN
 
 const Controls: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings } = state;
+    const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings, apiKey, aiFeaturesEnabled } = state;
 
     const [searchInput, setSearchInput] = useState(filters.search);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +63,7 @@ const Controls: React.FC = () => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            processFiles(e.target.files, snapshots, activeSnapshotKey, dispatch);
+            processFiles(e.target.files, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
         }
     };
     

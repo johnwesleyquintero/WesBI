@@ -1,4 +1,3 @@
-
 import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings, Toast } from '../types';
 
 export interface AppState {
@@ -8,6 +7,7 @@ export interface AppState {
     isComparisonMode: boolean;
     isComparisonModalOpen: boolean;
     isHelpModalOpen: boolean;
+    isSettingsModalOpen: boolean;
     comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
@@ -16,6 +16,8 @@ export interface AppState {
     currentPage: number;
     itemsPerPage: number;
     toasts: Toast[];
+    apiKey: string;
+    aiFeaturesEnabled: boolean;
 }
 
 export const initialState: AppState = {
@@ -25,6 +27,7 @@ export const initialState: AppState = {
     isComparisonMode: false,
     isComparisonModalOpen: false,
     isHelpModalOpen: false,
+    isSettingsModalOpen: false,
     comparisonSnapshotKeys: { base: null, compare: null },
     insights: [],
     filters: {
@@ -40,6 +43,8 @@ export const initialState: AppState = {
     currentPage: 1,
     itemsPerPage: 30,
     toasts: [],
+    apiKey: '',
+    aiFeaturesEnabled: true,
 };
 
 export type Action =
@@ -53,6 +58,9 @@ export type Action =
     | { type: 'CLOSE_COMPARISON_MODAL' }
     | { type: 'OPEN_HELP_MODAL' }
     | { type: 'CLOSE_HELP_MODAL' }
+    | { type: 'OPEN_SETTINGS_MODAL' }
+    | { type: 'CLOSE_SETTINGS_MODAL' }
+    | { type: 'SAVE_SETTINGS', payload: { apiKey: string; aiFeaturesEnabled: boolean } }
     | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
     | { type: 'RESET_FILTERS' }
@@ -128,6 +136,16 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, isHelpModalOpen: true };
         case 'CLOSE_HELP_MODAL':
             return { ...state, isHelpModalOpen: false };
+        case 'OPEN_SETTINGS_MODAL':
+            return { ...state, isSettingsModalOpen: true };
+        case 'CLOSE_SETTINGS_MODAL':
+            return { ...state, isSettingsModalOpen: false };
+        case 'SAVE_SETTINGS':
+            return {
+                ...state,
+                ...action.payload,
+                isSettingsModalOpen: false,
+            };
         case 'START_COMPARISON':
             return {
                 ...state,
