@@ -1,53 +1,49 @@
-import type { ProductData } from '../types';
 
-// The original parsing logic (parseAndProcessData) has been moved into `worker.js`
-// to offload heavy computation from the main thread and prevent UI freezing.
+import type { ProductData } from '../types';
+import { transformRawData } from './dataProcessor';
 
 /**
- * Parses a CSV file using a Web Worker to avoid blocking the main UI thread.
- * It delegates the file to the worker and returns a promise that resolves with
- * the processed data or rejects if an error occurs.
+ * Parses a CSV file using PapaParse's built-in Web Worker.
+ * This offloads the heavy parsing from the main UI thread to prevent freezing.
+ * The transformation of the data happens on the main thread after parsing is complete.
  * @param {File} file - The CSV file to be parsed.
  * @returns {Promise<ProductData[]>} A promise that resolves to an array of processed product data.
  */
 export const parseCSV = (file: File): Promise<ProductData[]> => {
     return new Promise((resolve, reject) => {
-        // Create a new worker. The worker script is expected to be served from the public root directory.
-        const worker = new Worker('/worker.js');
+        if (!window.Papa) {
+            // A guard in case PapaParse fails to load on the main page.
+            return reject(new Error('PapaParse library is not loaded.'));
+        }
 
-        // Handle messages received from the worker.
-        worker.onmessage = (event: MessageEvent) => {
-            // The worker will send an object with either a 'data' key on success
-            // or an 'error' key on failure.
-            if (event.data.error) {
-                console.error('Error from CSV Worker:', event.data.error, event.data.details || '');
-                reject(new Error(event.data.error));
-            } else {
-                // Resolve the promise with the successfully parsed and processed data.
-                resolve(event.data.data as ProductData[]);
+        window.Papa.parse(file, {
+            worker: true, // Use PapaParse's built-in worker for parsing
+            header: true,
+            skipEmptyLines: true,
+            complete: (results: { data: any[]; errors: any[] }) => {
+                // The 'results' object comes back from the worker to the main thread.
+                // Now, we process/transform the raw data on the main thread.
+                if (results.errors.length) {
+                    console.error('CSV parsing errors:', results.errors);
+                    // Provide a more specific error message if possible
+                    const errorMsg = results.errors.map(e => e.message).join(', ');
+                    reject(new Error(`Failed to parse CSV file: ${errorMsg}`));
+                    return;
+                }
+                
+                try {
+                    const processedData = transformRawData(results.data);
+                    resolve(processedData);
+                } catch (e) {
+                    console.error('Error processing parsed data:', e);
+                    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred.';
+                    reject(new Error(`Failed to process data after parsing: ${errorMessage}`));
+                }
+            },
+            error: (error: Error) => {
+                console.error('A critical error occurred in the PapaParse worker:', error);
+                reject(error);
             }
-            // Terminate the worker to free up system resources once the job is complete.
-            worker.terminate();
-        };
-
-        // Handle any critical errors that occur during worker initialization or execution.
-        worker.onerror = (error: ErrorEvent) => {
-            console.error('An unrecoverable error occurred in the CSV Worker:', error);
-            
-            // Script loading errors in workers often manifest as generic `Event` types
-            // without a `message` property. This provides a more helpful diagnostic message
-            // pointing to common issues like Content Security Policy (CSP) or network problems.
-            const detailedMessage = error.message 
-                ? `Worker error: ${error.message}`
-                : `An unrecoverable error occurred in the CSV Worker. This is often caused by a failure to load required scripts (like PapaParse) inside the worker. Please check your browser's network tab for failed requests and verify that your Content Security Policy (CSP) allows loading scripts from external CDNs (e.g., cdn.jsdelivr.net).`;
-
-            reject(new Error(detailedMessage));
-            
-            // Ensure the worker is terminated in case of an unhandled error.
-            worker.terminate();
-        };
-        
-        // Send the file to the worker to initiate the parsing process.
-        worker.postMessage(file);
+        });
     });
 };
