@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
 import StatCard from './components/StatCard';
@@ -17,6 +17,34 @@ import { useFilteredData } from './hooks/useFilteredData';
 const App: React.FC = () => {
     const { state } = useAppContext();
     const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, comparisonSnapshotKeys, itemsPerPage } = state;
+
+    // State to track if the Recharts script has been loaded.
+    const [rechartsReady, setRechartsReady] = useState(!!window.Recharts);
+
+    useEffect(() => {
+        // If Recharts is not on the window object, load it dynamically.
+        // This prevents race conditions between React (ESM) and Recharts (UMD).
+        if (!window.Recharts) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js';
+            script.async = true;
+            script.onload = () => {
+                setRechartsReady(true);
+            };
+            script.onerror = () => {
+                console.error('Failed to load the Recharts library. Charts will not be available.');
+            };
+            document.body.appendChild(script);
+
+            // Clean up the script tag if the component unmounts.
+            return () => {
+                // Check if the script is still in the body before trying to remove
+                if (script.parentNode) {
+                    document.body.removeChild(script);
+                }
+            };
+        }
+    }, []); // Empty dependency array ensures this runs only once.
 
     const filteredAndSortedData = useFilteredData();
     

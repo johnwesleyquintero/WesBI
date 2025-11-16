@@ -1,4 +1,4 @@
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangleIcon } from './Icons';
 
 interface Props {
@@ -20,11 +20,11 @@ const DefaultFallbackUI = () => (
     </div>
 );
 
-// FIX: Changed `extends Component` to `extends React.Component` and updated the import.
+// FIX: Imported `Component` directly and changed `extends React.Component` to `extends Component`.
 // This resolves a TypeScript error where `props` was not found on the `ErrorBoundary` type.
-// Using the fully qualified `React.Component` avoids potential import ambiguities and ensures
-// correct type inheritance from React's base Component class.
-class ErrorBoundary extends React.Component<Props, State> {
+// The global `window.React` can create ambiguity with the imported `React` object,
+// so using a direct named import for `Component` ensures the correct base class is extended.
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
   };

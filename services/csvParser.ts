@@ -32,9 +32,12 @@ export const parseCSV = (file: File): Promise<ProductData[]> => {
         };
 
         // Set up listener for critical errors in the worker itself
-        worker.onerror = (error) => {
+        worker.onerror = (error: ErrorEvent) => {
             console.error('A critical error occurred in the CSV worker:', error);
-            reject(new Error(`Worker error: ${error.message}`));
+            // An ErrorEvent from a worker might not have a clear message, especially for script loading failures.
+            // Construct a more informative error message to aid in debugging production issues.
+            const errorMessage = error.message || `An error occurred in the worker at ${error.filename}:${error.lineno}. This could be a network issue preventing the CSV parser script from loading.`;
+            reject(new Error(`Worker error: ${errorMessage}`));
             // Clean up the worker on error
             worker.terminate();
         };

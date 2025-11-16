@@ -75,5 +75,6 @@ declare global {
   interface Window {
     Papa: any;
     Recharts: any;
+    React: any;
   }
 }
