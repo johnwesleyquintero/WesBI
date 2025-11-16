@@ -1,8 +1,9 @@
+
 import { Dispatch } from 'react';
 import type { Snapshot } from '../types';
 import type { Action } from '../state/appReducer';
 import { parseCSV, parseFinancialCSV } from './csvParser';
-import { calculateStats } from './dataProcessor';
+import { calculateStats, processRawData } from './dataProcessor';
 import { getInsightsFromGemini } from './geminiService';
 
 export const processFiles = async (
@@ -38,8 +39,11 @@ export const processFiles = async (
             progress += progressStep;
             dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: `Processing ${file.name}...`, progress: Math.round(progress) } });
             
-            // Pass the financial map to the parser
-            const data = await parseCSV(file, financialDataMap);
+            // First, parse the CSV into raw data
+            const rawData = await parseCSV(file);
+            // Then, process the raw data to enrich and calculate metrics
+            const data = processRawData(rawData, financialDataMap);
+            
             const stats = calculateStats(data);
             newSnapshots[fileName] = { name: fileName, data, stats, timestamp: new Date().toISOString() };
         }
