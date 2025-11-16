@@ -36,13 +36,19 @@ export const loadState = (): Partial<AppState> | undefined => {
     }
     const parsedState = JSON.parse(serializedState) as Partial<PersistedState>;
 
-    // Production Fix: Validate the shape of the loaded state.
+    // Production Fix & Enhancement: Validate and migrate the shape of the loaded `sortConfig`.
     // An older version of the app may have stored `sortConfig` as an object instead of an array.
-    // This check ensures that an invalid `sortConfig` is discarded, allowing the application
-    // to fall back to the default array, preventing a crash from `...findIndex is not a function`.
-    if (parsedState.sortConfig && !Array.isArray(parsedState.sortConfig)) {
-      console.warn('Persisted `sortConfig` was not an array. Discarding invalid value.', parsedState.sortConfig);
-      delete parsedState.sortConfig;
+    // This logic attempts to migrate the old format, and if it fails or the format is unknown,
+    // it discards the invalid value to prevent crashes.
+    if (parsedState.sortConfig) {
+      const sortConfig = parsedState.sortConfig as any;
+      if (!Array.isArray(sortConfig) && typeof sortConfig === 'object' && sortConfig.key && sortConfig.direction) {
+        // Silently migrate the old object format to the new array format.
+        parsedState.sortConfig = [sortConfig];
+      } else if (!Array.isArray(sortConfig)) {
+        // If it's not an array and not a migratable object, it's invalid. Discard it.
+        delete parsedState.sortConfig;
+      }
     }
 
     return parsedState;
