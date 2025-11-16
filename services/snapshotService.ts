@@ -16,6 +16,8 @@ export const processFiles = async (
     dispatch({ type: 'PROCESS_FILES_START' });
     
     const newSnapshots: Record<string, Snapshot> = {};
+    const filesProcessedCount = files.length;
+
     try {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -36,11 +38,11 @@ export const processFiles = async (
             newInsights = await getInsightsFromGemini(allSnapshots[latestSnapshotKey].data);
         }
 
-        dispatch({ type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: allSnapshots, latestSnapshotKey, insights: newInsights }});
+        dispatch({ type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: allSnapshots, latestSnapshotKey, insights: newInsights, filesProcessedCount }});
 
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during file processing.';
         console.error(error);
-        alert(`Error processing files: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        dispatch({ type: 'PROCESS_FILES_ERROR' });
+        dispatch({ type: 'PROCESS_FILES_ERROR', payload: { message: errorMessage } });
     }
 };

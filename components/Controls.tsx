@@ -70,13 +70,22 @@ const Controls: React.FC = () => {
     
     const handleExport = useCallback(() => {
         if (filteredData.length === 0) {
-            alert("No data to export.");
+            dispatch({ type: 'ADD_TOAST', payload: {
+                type: 'info',
+                title: 'No Data to Export',
+                message: 'There are no products matching your current filters.'
+            }});
             return;
         }
         const timestamp = new Date().toISOString().split('T')[0];
         const mode = isComparisonMode ? 'comparison' : 'snapshot';
         exportToCSV(filteredData, `wesbi_export_${mode}_${timestamp}.csv`);
-    }, [filteredData, isComparisonMode]);
+        dispatch({ type: 'ADD_TOAST', payload: {
+            type: 'success',
+            title: 'Export Successful',
+            message: `${filteredData.length} rows have been exported to CSV.`
+        }});
+    }, [filteredData, isComparisonMode, dispatch]);
 
     const handleSnapshotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         dispatch({ type: 'SET_ACTIVE_SNAPSHOT', payload: e.target.value });

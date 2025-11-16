@@ -11,6 +11,7 @@ import ComparisonModal from './components/ComparisonModal';
 import HelpModal from './components/HelpModal';
 import InsightsPanel from './components/InsightsPanel';
 import ErrorBoundary from './components/ErrorBoundary';
+import ToastContainer from './components/ToastContainer';
 import { useAppContext } from './state/appContext';
 import { useFilteredData } from './hooks/useFilteredData';
 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
     return (
         <div className="p-4 md:p-8">
             <div className="max-w-screen-2xl mx-auto bg-white rounded-2xl shadow-2xl shadow-gray-300/30 overflow-hidden relative">
+                <ToastContainer />
                 <Loader loadingState={loadingState} />
                 {isComparisonModalOpen && <ComparisonModal />}
                 {isHelpModalOpen && <HelpModal />}

@@ -72,6 +72,13 @@ export interface SortCriterion {
 
 export type SortConfig = SortCriterion[];
 
+export interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+}
+
 // Global declarations for CDN libraries
 declare global {
   interface Window {
