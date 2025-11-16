@@ -10,6 +10,13 @@ import { AppProvider } from './state/appContext';
 (window as any).React = React;
 (window as any).ReactDOM = ReactDOM;
 
+// Production Fix: Some UMD libraries like Recharts still rely on the legacy `PropTypes`
+// library being attached to the React object. Since `prop-types` is now a separate package
+// (loaded via CDN in index.html), we manually attach it here to prevent runtime errors.
+if ((window as any).PropTypes) {
+  (window as any).React.PropTypes = (window as any).PropTypes;
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");

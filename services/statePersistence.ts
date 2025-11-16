@@ -34,10 +34,26 @@ export const loadState = (): Partial<AppState> | undefined => {
     if (serializedState === null) {
       return undefined;
     }
-    // Only return the parts of the state that are meant to be persisted.
-    return JSON.parse(serializedState) as PersistedState;
+    const parsedState = JSON.parse(serializedState) as Partial<PersistedState>;
+
+    // Production Fix: Validate the shape of the loaded state.
+    // An older version of the app may have stored `sortConfig` as an object instead of an array.
+    // This check ensures that an invalid `sortConfig` is discarded, allowing the application
+    // to fall back to the default array, preventing a crash from `...findIndex is not a function`.
+    if (parsedState.sortConfig && !Array.isArray(parsedState.sortConfig)) {
+      console.warn('Persisted `sortConfig` was not an array. Discarding invalid value.', parsedState.sortConfig);
+      delete parsedState.sortConfig;
+    }
+
+    return parsedState;
   } catch (error) {
-    console.warn("Could not load WesBI state from localStorage:", error);
+    console.warn("Could not load or parse WesBI state from localStorage:", error);
+    // If parsing fails, the stored data is likely corrupted. Clear it to prevent future errors.
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (removeError) {
+      console.error("Failed to remove corrupted state from localStorage:", removeError);
+    }
     return undefined;
   }
 };
