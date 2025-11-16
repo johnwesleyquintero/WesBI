@@ -8,6 +8,7 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
 
 *   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like Total Products, Available Inventory, Pending Removals, Sell-Through Rate, Average Inventory Age, and At-Risk SKUs.
 *   **AI-Powered Insights (Gemini):** Automatically generate concise, actionable business insights from your data. The system analyzes your inventory summary and provides recommendations to increase profit, reduce fees, and improve overall inventory health.
+*   **AI Strategy Session (Gemini):** Go beyond insights and generate a complete, step-by-step operational playbook. Select a high-level business goal (e.g., 'Liquidate High-Risk Inventory'), and the AI will analyze your current data to create a detailed, actionable plan to achieve your objective.
 *   **Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See per-SKU deltas for inventory levels, sales velocity, and risk scores directly within the data table and summary cards.
 *   **Restock Forecasting:** Proactively manage your inventory with calculated restock recommendations for each SKU. Fine-tune the forecast by adjusting key parameters like Supplier Lead Time, Safety Stock days, and overall Demand Forecast percentage.
 *   **Rich Data Visualization:**
@@ -32,7 +33,7 @@ This project is built as a modern, self-contained single-page application, lever
     *   **TypeScript:** For robust, type-safe code that is easier to maintain and scale.
     *   **Tailwind CSS:** For rapid, utility-first styling and a clean, modern design.
 *   **Artificial Intelligence:**
-    *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights" feature, providing sophisticated analysis of inventory data.
+    *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights" and "AI Strategy Session" features, providing sophisticated analysis of inventory data.
 *   **Data Handling & Visualization:**
     *   **PapaParse:** A high-performance, in-browser CSV parser used to efficiently process FBA snapshot files directly in the browser.
     *   **Recharts:** A composable charting library built on React components for creating beautiful and interactive data visualizations.
@@ -47,17 +48,21 @@ This project is built as a modern, self-contained single-page application, lever
 4.  **Analyze Your Dashboard:**
     *   The dashboard will load with summary statistics, AI-generated insights, and interactive charts.
     *   Scroll down to the data table to see a detailed breakdown of every SKU.
-5.  **Filter, Sort, and Forecast:**
+5.  **Generate an AI Strategy:**
+    *   Click the **"AI Strategy Session"** button.
+    *   Select a high-level business goal (e.g., "Liquidate High-Risk Inventory").
+    *   Click **"Generate Plan"** to receive a detailed, step-by-step action plan tailored to your current data.
+6.  **Filter, Sort, and Forecast:**
     *   Use the search bar and filter dropdowns to narrow down your data.
     *   Click on any column header in the data table to sort the data.
     *   Adjust the **Restock Forecast Settings** to get tailored reordering recommendations.
-6.  **Compare Snapshots:**
+7.  **Compare Snapshots:**
     *   Ensure at least two snapshots are loaded.
     *   Click the **"Compare..."** button. A modal will appear.
     *   Select your "Base" (older) and "Compare" (newer) snapshots and confirm.
     *   The dashboard and data table will now show the changes between the two snapshots.
     *   Click **"Exit Comparison"** to return to the single snapshot view.
-7.  **Export Data:**
+8.  **Export Data:**
     *   Click the **"Export"** button at any time to download the current data view (including all filters and sorting) as a new CSV file.
 
 ---
