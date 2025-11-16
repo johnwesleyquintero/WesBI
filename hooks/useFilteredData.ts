@@ -12,17 +12,32 @@ import {
 import type { ProductData, ForecastSettings } from '../types';
 
 const calculateRestockRecommendation = (item: ProductData, settings: ForecastSettings): number => {
-    if (item.shippedT30 <= 0) return 0;
+    // No restock needed for items with no recent sales or that are being removed.
+    if (item.shippedT30 <= 0 || item.recommendedAction.toLowerCase().includes('removal')) {
+        return 0;
+    }
 
     const dailySales = item.shippedT30 / 30;
     const forecastedDailySales = dailySales * (1 + (settings.demandForecast / 100));
-    
+
+    // Dynamically adjust safety stock based on sell-through rate.
+    // This provides a buffer for high-demand items and reduces overstocking on slow movers.
+    let dynamicSafetyStockDays = settings.safetyStock;
+    if (item.sellThroughRate > 75) { // High velocity
+        dynamicSafetyStockDays *= 1.5;
+    } else if (item.sellThroughRate < 25) { // Slow movers
+        dynamicSafetyStockDays *= 0.5;
+    }
+
     const demandDuringLeadTime = forecastedDailySales * settings.leadTime;
-    const requiredSafetyStock = forecastedDailySales * settings.safetyStock;
+    const requiredSafetyStock = forecastedDailySales * dynamicSafetyStockDays;
 
     const idealInventoryLevel = demandDuringLeadTime + requiredSafetyStock;
+    
+    // The recommendation should cover the gap to reach the ideal inventory level.
     const recommendation = idealInventoryLevel - item.available;
 
+    // Only recommend restocking if there's a need.
     return recommendation > 0 ? Math.ceil(recommendation) : 0;
 };
 
