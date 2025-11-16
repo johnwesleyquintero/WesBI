@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../state/appContext';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon } from './Icons';
 
 const HelpSection: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <div className="border-t border-gray-200 pt-4 mt-4 first:mt-0 first:border-t-0 first:pt-0">
@@ -76,6 +76,16 @@ const HelpModal: React.FC = () => {
                             <li>Click the <strong>"AI Strategy Session"</strong> button.</li>
                             <li>Select a high-level business goal from the dropdown, such as "Liquidate High-Risk Inventory".</li>
                             <li>WesBI will analyze your snapshot and generate a detailed plan, including specific SKUs to focus on, to achieve your objective.</li>
+                        </ul>
+                    </HelpSection>
+
+                     <HelpSection title="Mission Control" icon={<FlagIcon className="w-5 h-5" />}>
+                        <p>Turn your AI-generated strategy into a trackable mission. After generating a plan in the AI Strategy Session, click <strong>"Start Mission"</strong>.</p>
+                        <ul className="list-disc list-inside pl-4 space-y-1">
+                            <li>A new <strong>Mission Control</strong> panel will appear on your dashboard.</li>
+                            <li><strong>KPI Chart:</strong> This chart tracks the primary metric for your mission's goal. It automatically updates every time you upload a new snapshot, showing your progress over time.</li>
+                            <li><strong>Action Plan:</strong> The AI's step-by-step plan becomes an interactive checklist. Mark tasks as complete as you execute them.</li>
+                            <li>When finished, you can mark the mission as <strong>Complete</strong> or <strong>Abort</strong> it.</li>
                         </ul>
                     </HelpSection>
 

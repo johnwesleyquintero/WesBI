@@ -1,4 +1,5 @@
-import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings, Toast } from '../types';
+import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings, Toast, Mission, MissionTask } from '../types';
+import { calculateMissionKpi } from '../services/missionService';
 
 export interface AppState {
     snapshots: Record<string, Snapshot>;
@@ -19,6 +20,8 @@ export interface AppState {
     toasts: Toast[];
     apiKey: string;
     aiFeaturesEnabled: boolean;
+    missions: Mission[];
+    activeMissionId: string | null;
 }
 
 export const initialState: AppState = {
@@ -47,6 +50,8 @@ export const initialState: AppState = {
     toasts: [],
     apiKey: '',
     aiFeaturesEnabled: true,
+    missions: [],
+    activeMissionId: null,
 };
 
 export type Action =
@@ -73,7 +78,11 @@ export type Action =
     | { type: 'SET_CURRENT_PAGE', payload: number }
     | { type: 'SET_ITEMS_PER_PAGE', payload: number }
     | { type: 'ADD_TOAST', payload: Omit<Toast, 'id'> }
-    | { type: 'REMOVE_TOAST', payload: string };
+    | { type: 'REMOVE_TOAST', payload: string }
+    | { type: 'START_MISSION', payload: Mission }
+    | { type: 'TOGGLE_TASK', payload: { missionId: string, taskId: string } }
+    | { type: 'COMPLETE_MISSION', payload: { missionId: string, finalStatus: 'completed' | 'aborted' } };
+
 
 export const appReducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
@@ -94,6 +103,26 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 title: 'Processing Complete',
                 message: `${action.payload.filesProcessedCount} snapshot(s) processed successfully.`
             };
+
+            // --- Mission KPI Update Logic ---
+            const updatedMissions = [...state.missions];
+            const activeMissionIndex = state.activeMissionId ? updatedMissions.findIndex(m => m.id === state.activeMissionId) : -1;
+            
+            if (activeMissionIndex > -1) {
+                const activeMission = { ...updatedMissions[activeMissionIndex] };
+                const newSnapshotKeys = Object.keys(action.payload.snapshots).filter(key => !state.snapshots[key]);
+
+                for (const key of newSnapshotKeys) {
+                    const newSnapshotData = action.payload.snapshots[key].data;
+                    const kpiValue = calculateMissionKpi(activeMission.goal, newSnapshotData);
+                    // Avoid duplicate entries
+                    if (!activeMission.kpi.values.some(v => v.snapshotName === key)) {
+                        activeMission.kpi.values.push({ snapshotName: key, value: kpiValue });
+                    }
+                }
+                updatedMissions[activeMissionIndex] = activeMission;
+            }
+
             return {
                 ...state,
                 snapshots: action.payload.snapshots,
@@ -102,6 +131,7 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 loadingState: { isLoading: false, message: '', progress: 0 },
                 currentPage: 1,
                 toasts: [...state.toasts, { ...successToast, id: Date.now().toString() }],
+                missions: updatedMissions,
             };
         }
         case 'PROCESS_FILES_ERROR': {
@@ -232,6 +262,48 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 toasts: state.toasts.filter(toast => toast.id !== action.payload),
             };
+        
+        // --- Mission Actions ---
+        case 'START_MISSION':
+            return {
+                ...state,
+                missions: [...state.missions.filter(m => m.status !== 'active'), action.payload],
+                activeMissionId: action.payload.id,
+                isStrategyModalOpen: false,
+            };
+        
+        case 'TOGGLE_TASK': {
+            const { missionId, taskId } = action.payload;
+            const missionIndex = state.missions.findIndex(m => m.id === missionId);
+            if (missionIndex === -1) return state;
+
+            const updatedMissions = [...state.missions];
+            const missionToUpdate = { ...updatedMissions[missionIndex] };
+            
+            missionToUpdate.tasks = missionToUpdate.tasks.map(task =>
+                task.id === taskId ? { ...task, completed: !task.completed } : task
+            );
+
+            updatedMissions[missionIndex] = missionToUpdate;
+
+            return { ...state, missions: updatedMissions };
+        }
+        
+        case 'COMPLETE_MISSION': {
+            const { missionId, finalStatus } = action.payload;
+            const missionIndex = state.missions.findIndex(m => m.id === missionId);
+            if (missionIndex === -1) return state;
+
+            const updatedMissions = [...state.missions];
+            updatedMissions[missionIndex] = { ...updatedMissions[missionIndex], status: finalStatus };
+
+            return {
+                ...state,
+                missions: updatedMissions,
+                activeMissionId: null,
+            };
+        }
+
         default:
             return state;
     }

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { getStrategyFromGemini } from '../services/geminiService';
+import { createMission } from '../services/missionService';
 import { SparklesIcon, XIcon } from './Icons';
 
 const STRATEGY_GOALS = [
@@ -23,7 +24,7 @@ const LoadingSpinner: React.FC = () => (
 
 const StrategyModal: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { snapshots, activeSnapshotKey, apiKey } = state;
+    const { snapshots, activeSnapshotKey, apiKey, activeMissionId } = state;
 
     const [goal, setGoal] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
@@ -53,25 +54,25 @@ const StrategyModal: React.FC = () => {
         }
     };
     
-    const handleCopyToClipboard = () => {
-        // We copy the raw markdown (`plan`) to preserve formatting for pasting elsewhere.
-        navigator.clipboard.writeText(plan);
+    const handleStartMission = () => {
+        if (!plan || !goal || !activeSnapshotKey) return;
+        const activeSnapshot = snapshots[activeSnapshotKey];
+        if (!activeSnapshot) return;
+
+        const newMission = createMission(goal, plan, { name: activeSnapshot.name, data: activeSnapshot.data });
+        dispatch({ type: 'START_MISSION', payload: newMission });
         dispatch({ type: 'ADD_TOAST', payload: {
             type: 'success',
-            title: 'Copied to Clipboard',
-            message: 'The AI-generated strategy has been copied.'
+            title: 'Mission Started!',
+            message: `Your new mission "${goal}" is now active.`
         }});
     };
 
     const parsedPlanHtml = useMemo(() => {
         if (!plan) return '';
-        // If the 'marked' library is available on the window, parse the markdown to HTML.
         if (window.marked) {
-            // Sanitize option is important but marked's default is good enough here
-            // since the source is trusted (our API call).
             return window.marked.parse(plan);
         }
-        // Fallback for robustness: if marked fails to load, display the raw text in a <pre> tag.
         return `<pre style="white-space: pre-wrap; font-family: sans-serif; font-size: 14px;">${plan}</pre>`;
     }, [plan]);
 
@@ -112,6 +113,11 @@ const StrategyModal: React.FC = () => {
                 <div className="p-6 space-y-4 overflow-y-auto">
                     {!plan && !isLoading && (
                         <>
+                            {activeMissionId && (
+                                <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md text-sm">
+                                    <strong>Note:</strong> An existing mission is already active. Starting a new mission will abort the current one.
+                                </div>
+                            )}
                             <div>
                                 <label htmlFor="strategyGoal" className="block text-sm font-medium text-gray-700 mb-1">Select Your Primary Goal</label>
                                 <select 
@@ -141,7 +147,7 @@ const StrategyModal: React.FC = () => {
                     
                     {plan && (
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">Your Action Plan for: <span className="text-[#9c4dff]">{goal}</span></h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Generated Plan for: <span className="text-[#9c4dff]">{goal}</span></h3>
                             <div
                                 className="text-sm text-gray-700 strategy-content"
                                 dangerouslySetInnerHTML={{ __html: parsedPlanHtml }}
@@ -150,19 +156,21 @@ const StrategyModal: React.FC = () => {
                     )}
                 </div>
 
-                <div className="p-6 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+                <div className="p-6 border-t border-gray-200 flex justify-between items-center flex-shrink-0">
                     <button onClick={handleClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
                         Close
                     </button>
-                    {plan ? (
-                         <button onClick={handleCopyToClipboard} className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">
-                            Copy to Clipboard
-                        </button>
-                    ) : (
-                        <button onClick={handleGenerate} disabled={!goal || isLoading} className="px-4 py-2 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
-                            {isLoading ? 'Generating...' : 'Generate Plan'}
-                        </button>
-                    )}
+                    <div className="flex gap-3">
+                         {plan ? (
+                            <button onClick={handleStartMission} className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">
+                                Start Mission
+                            </button>
+                        ) : (
+                            <button onClick={handleGenerate} disabled={!goal || isLoading} className="px-4 py-2 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                {isLoading ? 'Generating...' : 'Generate Plan'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -11,6 +11,7 @@ import ComparisonModal from './components/ComparisonModal';
 import HelpModal from './components/HelpModal';
 import SettingsModal from './components/SettingsModal';
 import StrategyModal from './components/StrategyModal';
+import MissionControl from './components/MissionControl';
 import InsightsPanel from './components/InsightsPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/ToastContainer';
@@ -19,7 +20,7 @@ import { useFilteredData } from './hooks/useFilteredData';
 
 const App: React.FC = () => {
     const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
 
     // State to track if the Recharts script has been loaded.
     const [rechartsReady, setRechartsReady] = useState(!!window.Recharts);
@@ -143,6 +144,13 @@ const App: React.FC = () => {
                             </ErrorBoundary>
                         )}
                         
+                        {/* Mission Control Panel */}
+                        {activeMissionId && (
+                            <ErrorBoundary>
+                                <MissionControl />
+                            </ErrorBoundary>
+                        )}
+
                         {/* Real Charts */}
                         {activeSnapshot && !isComparisonMode && (
                             <ErrorBoundary>

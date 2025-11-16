@@ -79,6 +79,29 @@ export interface Toast {
   message: string;
 }
 
+// --- Mission Control Types ---
+export interface MissionTask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface MissionKPI {
+  name: string;
+  values: { snapshotName: string; value: number }[];
+}
+
+export interface Mission {
+  id: string;
+  goal: string;
+  playbook: string; // The raw markdown
+  status: 'active' | 'completed' | 'aborted';
+  createdAt: string;
+  kpi: MissionKPI;
+  tasks: MissionTask[];
+}
+
+
 // Global declarations for CDN libraries
 declare global {
   interface Window {
