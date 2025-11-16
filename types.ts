@@ -76,5 +76,6 @@ declare global {
     Papa: any;
     Recharts: any;
     React: any;
+    ReactDOM: any;
   }
 }
