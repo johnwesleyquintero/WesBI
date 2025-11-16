@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
@@ -13,6 +14,7 @@ import SettingsModal from './components/SettingsModal';
 import StrategyModal from './components/StrategyModal';
 import MissionControl from './components/MissionControl';
 import InsightsPanel from './components/InsightsPanel';
+import AlertCenter from './components/AlertCenter';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/ToastContainer';
 import { useAppContext } from './state/appContext';
@@ -122,13 +124,6 @@ const App: React.FC = () => {
                 <ErrorBoundary>
                     <Controls />
                 </ErrorBoundary>
-                
-                {/* Don't show insights panel during skeleton load, and only if enabled */}
-                {!showSkeleton && aiFeaturesEnabled && (
-                    <ErrorBoundary>
-                        <InsightsPanel insights={insights} />
-                    </ErrorBoundary>
-                )}
 
                 {showSkeleton ? (
                     <>
@@ -154,6 +149,18 @@ const App: React.FC = () => {
                                     <StatCard label="Potential Revenue" value={formatCurrency(displayedStats.current.totalPotentialRevenue)} change={displayedStats.change.totalPotentialRevenue} />
                                     <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
                                 </div>
+                            </ErrorBoundary>
+                        )}
+
+                        {/* NEW: Proactive Alert Center */}
+                        <ErrorBoundary>
+                            <AlertCenter data={filteredAndSortedData} isComparisonMode={isComparisonMode} />
+                        </ErrorBoundary>
+                        
+                        {/* AI Insights Panel */}
+                        {aiFeaturesEnabled && (
+                            <ErrorBoundary>
+                                <InsightsPanel insights={insights} />
                             </ErrorBoundary>
                         )}
                         

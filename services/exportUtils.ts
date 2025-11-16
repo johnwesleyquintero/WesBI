@@ -52,13 +52,22 @@ export const exportToCSV = (data: ProductData[], filename: string) => {
         headers.push({ key: 'ageChange', title: 'Age Change' });
         headers.push({ key: 'riskScoreChange', title: 'Risk Score Change' });
         headers.push({ key: 'inventoryValueChange', title: 'Inventory Value Change' });
+        
+        if (data[0].velocityTrend !== undefined) {
+            headers.push({ key: 'velocityTrend', title: 'Velocity Trend (%)' });
+        }
     }
 
     const headerRow = headers.map(h => h.title).join(',');
     
     const dataRows = data.map(row => {
         return headers.map(header => {
-            return escapeCSVField(row[header.key]);
+            const value = row[header.key];
+            // Handle special value for velocity trend in export
+            if (header.key === 'velocityTrend' && value === 999) {
+                return escapeCSVField('New');
+            }
+            return escapeCSVField(value);
         }).join(',');
     }).join('\n');
 

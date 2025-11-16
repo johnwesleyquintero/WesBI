@@ -1,3 +1,4 @@
+
 import type { ProductData, Stats, Snapshot } from '../types';
 
 /**
@@ -114,15 +115,31 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
     return newSnapshot.data.map(newItem => {
         const oldItem = oldDataMap.get(newItem.sku);
         if (oldItem) {
+            const oldShipped = oldItem.shippedT30;
+            const newShipped = newItem.shippedT30;
+            let velocityTrend: number;
+
+            if (oldShipped > 0) {
+                velocityTrend = ((newShipped - oldShipped) / oldShipped) * 100;
+            } else if (newShipped > 0) {
+                // Represents a new item that started selling; assign a high positive value.
+                velocityTrend = 999;
+            } else {
+                // No sales in either period.
+                velocityTrend = 0;
+            }
+
             return {
                 ...newItem,
                 inventoryChange: newItem.available - oldItem.available,
-                shippedChange: newItem.shippedT30 - oldItem.shippedT30,
+                shippedChange: newShipped - oldShipped,
                 ageChange: newItem.totalInvAgeDays - oldItem.totalInvAgeDays,
                 riskScoreChange: newItem.riskScore - oldItem.riskScore,
                 inventoryValueChange: (newItem.inventoryValue || 0) - (oldItem.inventoryValue || 0),
+                velocityTrend: velocityTrend,
             };
         }
+        // Item exists in new snapshot but not old one
         return {
             ...newItem,
             inventoryChange: newItem.available,
@@ -130,6 +147,7 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
             ageChange: newItem.totalInvAgeDays,
             riskScoreChange: newItem.riskScore,
             inventoryValueChange: newItem.inventoryValue,
+            velocityTrend: newItem.shippedT30 > 0 ? 999 : 0, // Treat as a new selling item
         };
     });
 };

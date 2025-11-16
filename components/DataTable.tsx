@@ -90,6 +90,16 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
         const formattedChange = isCurrency ? formatCurrency(change, 0) : (isPositive ? '+' : '') + change.toLocaleString();
         return <div className={`text-xs ${color}`}>({formattedChange})</div>;
     };
+    
+    const renderVelocityTrend = (trend: number | undefined) => {
+        if (trend === undefined) return null;
+        if (trend === 999) return <div className="text-xs text-green-600 font-semibold">(New)</div>;
+        if (trend === 0) return <div className="text-xs text-gray-500">(0%)</div>;
+        
+        const isPositive = trend > 0;
+        const color = trend > 10 ? 'text-green-600' : trend < -10 ? 'text-red-600' : 'text-gray-500';
+        return <div className={`text-xs ${color}`}>({isPositive ? '+' : ''}{trend.toFixed(0)}%)</div>;
+    };
 
     return (
         <tr className={`hover:bg-purple-50 transition-colors duration-200 ${getRowClass()}`}>
@@ -110,6 +120,11 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
                 {item.shippedT30.toLocaleString()}
                  {isComparisonMode && renderChange(item.shippedChange)}
             </td>
+            {isComparisonMode && (
+                <td className="text-right font-mono">
+                    {renderVelocityTrend(item.velocityTrend)}
+                </td>
+            )}
             <td className="text-right font-mono">{item.sellThroughRate}%</td>
             <td>
                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(item.recommendedAction)}`}>
@@ -142,23 +157,38 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
         dispatch({ type: 'UPDATE_SORT', payload: { key, shiftKey } });
     };
 
-    const headers: { key: keyof ProductData; title: string; isNumeric?: boolean }[] = [
-        { key: 'sku', title: 'SKU' },
-        { key: 'asin', title: 'ASIN' },
-        { key: 'name', title: 'Product Name' },
-        { key: 'condition', title: 'Condition' },
-        { key: 'available', title: 'Available', isNumeric: true },
-        { key: 'pendingRemoval', title: 'Pending Removal', isNumeric: true },
-        { key: 'totalInvAgeDays', title: 'Avg Inv Age', isNumeric: true },
-        { key: 'shippedT30', title: 'Shipped T30', isNumeric: true },
-        { key: 'sellThroughRate', title: 'Sell-Through', isNumeric: true },
-        { key: 'recommendedAction', title: 'Action' },
-        { key: 'riskScore', title: 'Risk Score', isNumeric: true },
-        { key: 'inventoryValue', title: 'Inv. Value', isNumeric: true },
-        { key: 'potentialRevenue', title: 'Potential Rev.', isNumeric: true },
-        { key: 'grossProfitPerUnit', title: 'Profit/Unit', isNumeric: true },
-        { key: 'restockRecommendation', title: 'Restock Units', isNumeric: true },
-    ];
+    const headers = useMemo(() => {
+        const baseHeaders: { key: keyof ProductData; title: string; isNumeric?: boolean }[] = [
+            { key: 'sku', title: 'SKU' },
+            { key: 'asin', title: 'ASIN' },
+            { key: 'name', title: 'Product Name' },
+            { key: 'condition', title: 'Condition' },
+            { key: 'available', title: 'Available', isNumeric: true },
+            { key: 'pendingRemoval', title: 'Pending Removal', isNumeric: true },
+            { key: 'totalInvAgeDays', title: 'Avg Inv Age', isNumeric: true },
+            { key: 'shippedT30', title: 'Shipped T30', isNumeric: true },
+            { key: 'sellThroughRate', title: 'Sell-Through', isNumeric: true },
+            { key: 'recommendedAction', title: 'Action' },
+            { key: 'riskScore', title: 'Risk Score', isNumeric: true },
+            { key: 'inventoryValue', title: 'Inv. Value', isNumeric: true },
+            { key: 'potentialRevenue', title: 'Potential Rev.', isNumeric: true },
+            { key: 'grossProfitPerUnit', title: 'Profit/Unit', isNumeric: true },
+            { key: 'restockRecommendation', title: 'Restock Units', isNumeric: true },
+        ];
+
+        if (isComparisonMode) {
+            const shippedIndex = baseHeaders.findIndex(h => h.key === 'shippedT30');
+            if (shippedIndex > -1) {
+                baseHeaders.splice(shippedIndex + 1, 0, {
+                    key: 'velocityTrend',
+                    title: 'Velocity Trend',
+                    isNumeric: true
+                });
+            }
+        }
+        return baseHeaders;
+    }, [isComparisonMode]);
+
 
     return (
         <div className="p-4 md:p-6 overflow-x-auto">

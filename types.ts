@@ -31,7 +31,8 @@ export interface ProductData {
   shippedChange?: number;
   ageChange?: number;
   riskScoreChange?: number;
-  inventoryValueChange?: number; // NEW
+  inventoryValueChange?: number;
+  velocityTrend?: number; // NEW
 }
 
 export interface Stats {

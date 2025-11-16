@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -45,7 +46,23 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     }
 
     const dailySales = item.shippedT30 / 30;
-    const forecastedDailySales = dailySales * (1 + (settings.demandForecast / 100));
+    
+    // --- NEW: Trend-Aware Forecasting ---
+    // Adjust forecast based on recent sales velocity trends.
+    let trendAdjustment = 1.0;
+    if (item.velocityTrend !== undefined) {
+        if (item.velocityTrend > 25) { // Significant growth
+            trendAdjustment = 1.25;
+        } else if (item.velocityTrend > 10) { // Moderate growth
+            trendAdjustment = 1.1;
+        } else if (item.velocityTrend < -25) { // Significant decline
+            trendAdjustment = 0.75;
+        } else if (item.velocityTrend < -10) { // Moderate decline
+            trendAdjustment = 0.9;
+        }
+    }
+    
+    const forecastedDailySales = dailySales * (1 + (settings.demandForecast / 100)) * trendAdjustment;
 
     // Dynamically adjust safety stock based on sell-through rate.
     // This provides a buffer for high-demand items and reduces overstocking on slow movers.
