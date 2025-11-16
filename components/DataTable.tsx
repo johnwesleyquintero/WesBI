@@ -2,12 +2,10 @@
 import React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
+import { useAppContext } from '../state/appContext';
 
 interface DataTableProps {
     data: ProductData[];
-    sortConfig: SortConfig;
-    onSort: (key: keyof ProductData) => void;
-    isComparisonMode: boolean;
 }
 
 const SortableHeader: React.FC<{
@@ -94,7 +92,14 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
 };
 
 
-const DataTable: React.FC<DataTableProps> = ({ data, sortConfig, onSort, isComparisonMode }) => {
+const DataTable: React.FC<DataTableProps> = ({ data }) => {
+    const { state, dispatch } = useAppContext();
+    const { sortConfig, isComparisonMode } = state;
+
+    const onSort = (key: keyof ProductData) => {
+        dispatch({ type: 'UPDATE_SORT', payload: key });
+    };
+
     const headers: { key: keyof ProductData; title: string; isNumeric?: boolean }[] = [
         { key: 'sku', title: 'SKU' },
         { key: 'asin', title: 'ASIN' },

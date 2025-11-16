@@ -1,14 +1,20 @@
 
 import React from 'react';
 import { ArrowLeftIcon, ArrowRightIcon } from './Icons';
+import { useAppContext } from '../state/appContext';
 
 interface PaginationProps {
-    currentPage: number;
     totalPages: number;
-    onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination: React.FC<PaginationProps> = ({ totalPages }) => {
+    const { state, dispatch } = useAppContext();
+    const { currentPage } = state;
+    
+    const onPageChange = (page: number) => {
+        dispatch({ type: 'SET_CURRENT_PAGE', payload: page });
+    };
+
     if (totalPages <= 1) return null;
 
     const pageNumbers = [];

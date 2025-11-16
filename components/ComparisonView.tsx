@@ -1,13 +1,19 @@
 
 import React from 'react';
 import { CompareIcon } from './Icons';
+import { useAppContext } from '../state/appContext';
 
 interface ComparisonViewProps {
-    onExit: () => void;
     info: string;
 }
 
-const ComparisonView: React.FC<ComparisonViewProps> = ({ onExit, info }) => {
+const ComparisonView: React.FC<ComparisonViewProps> = ({ info }) => {
+    const { dispatch } = useAppContext();
+
+    const onExit = () => {
+        dispatch({ type: 'SET_COMPARISON_MODE', payload: false });
+    };
+
     return (
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-center p-4">
             <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">

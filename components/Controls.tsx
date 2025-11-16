@@ -1,25 +1,20 @@
-import React, { useMemo, useRef } from 'react';
+
+import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import type { Filters } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
+import { useAppContext } from '../state/appContext';
+import { useFilteredData } from '../hooks/useFilteredData';
+import { processFiles } from '../services/snapshotService';
+import { exportToCSV } from '../services/exportUtils';
 
-interface ControlsProps {
-    onProcessFiles: (files: FileList) => void;
-    onCompare: () => void;
-    onShowAlerts: () => void;
-    onExport: () => void;
-    filters: Filters;
-    onFilterChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
-    onResetFilters: () => void;
-    snapshotCount: number;
-    exportDataCount: number;
-}
-
-const ControlButton: React.FC<{
+interface ControlButtonProps {
     onClick: () => void;
     children: React.ReactNode;
     className: string;
     disabled?: boolean;
-}> = ({ onClick, children, className, disabled = false }) => (
+}
+
+const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, className, disabled = false }) => (
     <button
         onClick={onClick}
         disabled={disabled}
@@ -29,21 +24,58 @@ const ControlButton: React.FC<{
     </button>
 );
 
-const Controls: React.FC<ControlsProps> = ({ 
-    onProcessFiles, onCompare, onShowAlerts, onExport, 
-    filters, onFilterChange, onResetFilters, snapshotCount,
-    exportDataCount
-}) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+const Controls: React.FC = () => {
+    const { state, dispatch } = useAppContext();
+    const { filters, snapshots, activeSnapshotKey, isComparisonMode } = state;
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            onProcessFiles(e.target.files);
+    const [searchInput, setSearchInput] = useState(filters.search);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const filteredData = useFilteredData();
+
+    // Debounce search input
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchInput !== filters.search) {
+                dispatch({ type: 'UPDATE_FILTER', payload: { key: 'search', value: searchInput } });
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput, filters.search, dispatch]);
+
+    // Reset local search input when global filters are reset
+    useEffect(() => {
+        if (filters.search === '') {
+            setSearchInput('');
+        }
+    }, [filters.search]);
+
+    const handleFilterChange = <K extends keyof Filters>(key: K, value: Filters[K]) => {
+        if (key === 'search') {
+            setSearchInput(value as string);
+        } else {
+            dispatch({ type: 'UPDATE_FILTER', payload: { key, value } });
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            processFiles(e.target.files, snapshots, activeSnapshotKey, dispatch);
+        }
+    };
+    
+    const handleExport = useCallback(() => {
+        if (filteredData.length === 0) {
+            alert("No data to export.");
+            return;
+        }
+        const timestamp = new Date().toISOString().split('T')[0];
+        const mode = isComparisonMode ? 'comparison' : 'snapshot';
+        exportToCSV(filteredData, `wesbi_export_${mode}_${timestamp}.csv`);
+    }, [filteredData, isComparisonMode]);
+
+
     const activeFilterCount = useMemo(() => {
-        return [filters.search, filters.action, filters.age, filters.stockStatus, filters.minStock].filter(Boolean).length;
+        return Object.values(filters).filter(Boolean).length;
     }, [filters]);
 
     const getFilterClass = (isActive: boolean) => {
@@ -72,10 +104,10 @@ const Controls: React.FC<ControlsProps> = ({
                     onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
                     aria-label="Upload FBA Snapshot CSV files"
                 />
-                <ControlButton onClick={onCompare} disabled={snapshotCount < 2} className="bg-blue-500 text-white hover:bg-blue-600">
+                <ControlButton onClick={() => dispatch({ type: 'SET_COMPARISON_MODE', payload: true })} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                     <CompareIcon /> Compare
                 </ControlButton>
-                <ControlButton onClick={onExport} disabled={exportDataCount === 0} className="bg-green-500 text-white hover:bg-green-600">
+                <ControlButton onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
                     <ExportIcon /> Export
                 </ControlButton>
             </div>
@@ -85,8 +117,8 @@ const Controls: React.FC<ControlsProps> = ({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
                     <input 
                         type="text" 
-                        value={filters.search}
-                        onChange={(e) => onFilterChange('search', e.target.value)}
+                        value={searchInput}
+                        onChange={(e) => handleFilterChange('search', e.target.value)}
                         placeholder="Search by SKU, ASIN, or Product Name..."
                         aria-label="Search by SKU, ASIN, or Product Name"
                         className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9c4dff] text-sm transition-colors duration-200 ${
@@ -95,27 +127,27 @@ const Controls: React.FC<ControlsProps> = ({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => onFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
+                    <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => handleFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>
                         <option value="91-180">91-180 days</option>
                         <option value="181-365">181-365 days</option>
                         <option value="365+">365+ days</option>
                     </select>
-                    <select aria-label="Filter by recommended action" value={filters.action} onChange={(e) => onFilterChange('action', e.target.value)} className={getFilterClass(!!filters.action)}>
+                    <select aria-label="Filter by recommended action" value={filters.action} onChange={(e) => handleFilterChange('action', e.target.value)} className={getFilterClass(!!filters.action)}>
                         <option value="">All Actions</option>
                         <option value="removal">Recommended Removal</option>
                         <option value="normal">No Action</option>
                     </select>
-                     <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => onFilterChange('stockStatus', e.target.value)} className={getFilterClass(!!filters.stockStatus)}>
+                     <select aria-label="Filter by stock status" value={filters.stockStatus} onChange={(e) => handleFilterChange('stockStatus', e.target.value)} className={getFilterClass(!!filters.stockStatus)}>
                         <option value="">Stock Status</option>
                         <option value="low">Low Stock</option>
                         <option value="high">High Stock</option>
                         <option value="stranded">Stranded</option>
                     </select>
-                    <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => onFilterChange('minStock', e.target.value)} placeholder="Min Stock" className={getFilterClass(!!filters.minStock)} />
+                    <input aria-label="Minimum stock level" type="number" value={filters.minStock} onChange={(e) => handleFilterChange('minStock', e.target.value)} placeholder="Min Stock" className={getFilterClass(!!filters.minStock)} />
                     <button 
-                        onClick={onResetFilters}
+                        onClick={() => dispatch({ type: 'RESET_FILTERS' })}
                         disabled={activeFilterCount === 0}
                         className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 ${
                             activeFilterCount > 0
@@ -131,7 +163,6 @@ const Controls: React.FC<ControlsProps> = ({
                 .filter-select {
                     width: 100%;
                     padding: 0.625rem 0.75rem;
-                    /* border is handled by Tailwind classes now */
                     border-radius: 0.5rem;
                     background-color: white;
                     font-size: 0.875rem;
