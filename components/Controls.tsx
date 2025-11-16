@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import type { Filters, ForecastSettings } from '../types';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';
@@ -93,6 +93,10 @@ const Controls: React.FC = () => {
     const handleCompareClick = () => {
         dispatch({ type: 'OPEN_COMPARISON_MODAL' });
     };
+    
+    const handleStrategyClick = () => {
+        dispatch({ type: 'OPEN_STRATEGY_MODAL' });
+    };
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(Boolean).length;
@@ -115,7 +119,7 @@ const Controls: React.FC = () => {
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <ControlButton 
                     onClick={() => fileInputRef.current?.click()} 
                     className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]"
@@ -132,6 +136,9 @@ const Controls: React.FC = () => {
                     onClick={(e) => { (e.target as HTMLInputElement).value = '' }} // Allow re-selecting same file
                     aria-label="Upload FBA Snapshot CSV files"
                 />
+                <ControlButton onClick={handleStrategyClick} disabled={!activeSnapshotKey || !aiFeaturesEnabled} className="bg-teal-500 text-white hover:bg-teal-600">
+                    <SparklesIcon /> AI Strategy Session
+                </ControlButton>
                 <ControlButton onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                     <CompareIcon /> Compare...
                 </ControlButton>

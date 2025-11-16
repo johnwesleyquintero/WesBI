@@ -8,6 +8,7 @@ export interface AppState {
     isComparisonModalOpen: boolean;
     isHelpModalOpen: boolean;
     isSettingsModalOpen: boolean;
+    isStrategyModalOpen: boolean;
     comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
@@ -28,6 +29,7 @@ export const initialState: AppState = {
     isComparisonModalOpen: false,
     isHelpModalOpen: false,
     isSettingsModalOpen: false,
+    isStrategyModalOpen: false,
     comparisonSnapshotKeys: { base: null, compare: null },
     insights: [],
     filters: {
@@ -60,6 +62,8 @@ export type Action =
     | { type: 'CLOSE_HELP_MODAL' }
     | { type: 'OPEN_SETTINGS_MODAL' }
     | { type: 'CLOSE_SETTINGS_MODAL' }
+    | { type: 'OPEN_STRATEGY_MODAL' }
+    | { type: 'CLOSE_STRATEGY_MODAL' }
     | { type: 'SAVE_SETTINGS', payload: { apiKey: string; aiFeaturesEnabled: boolean } }
     | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
@@ -140,6 +144,10 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, isSettingsModalOpen: true };
         case 'CLOSE_SETTINGS_MODAL':
             return { ...state, isSettingsModalOpen: false };
+        case 'OPEN_STRATEGY_MODAL':
+            return { ...state, isStrategyModalOpen: true };
+        case 'CLOSE_STRATEGY_MODAL':
+            return { ...state, isStrategyModalOpen: false };
         case 'SAVE_SETTINGS':
             return {
                 ...state,

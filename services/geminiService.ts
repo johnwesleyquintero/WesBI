@@ -77,3 +77,39 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
         return ["Failed to generate AI insights. Please check your API key and network connection."];
     }
 };
+
+export const getStrategyFromGemini = async (data: ProductData[], goal: string, apiKey: string): Promise<string> => {
+    if (!data || data.length === 0) return "No data available to generate a strategy.";
+    if (!apiKey) return "Cannot generate strategy: Gemini API key is not configured in settings.";
+
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const dataSummary = summarizeDataForPrompt(data);
+        const prompt = `
+        You are WesBI, an expert FBA (Fulfillment by Amazon) operations analyst and strategist.
+        Based on the following FBA inventory data summary, generate a detailed, actionable strategic plan to achieve the following business goal: "${goal}".
+
+        Your plan should be formatted in Markdown and include:
+        1.  A brief **Objective** statement.
+        2.  A list of **Key Priorities** (2-3 bullet points).
+        3.  A **Step-by-Step Action Plan** with specific, numbered actions. If relevant, mention specific SKUs from the data summary.
+        4.  A concluding **Expected Outcome** statement.
+
+        Do not repeat the raw data summary. Focus on clear, operational steps.
+
+        Data Summary:
+        ${dataSummary}
+        `;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        
+        return response.text;
+
+    } catch (error) {
+        console.error("Error fetching strategy from Gemini:", error);
+        return "Failed to generate AI Strategy. Please check your API key and network connection. The model may also be overloaded.";
+    }
+};
