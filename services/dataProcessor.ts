@@ -1,3 +1,4 @@
+
 import type { ProductData, Stats, Snapshot } from '../types';
 
 export const calculateStats = (data: ProductData[]): Stats => {

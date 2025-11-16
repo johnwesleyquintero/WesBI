@@ -1,3 +1,4 @@
+
 import type { ProductData } from '../types';
 
 /**

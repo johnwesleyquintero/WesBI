@@ -5,12 +5,12 @@ import StatCard from './components/StatCard';
 import { AgeDistributionChart, RiskChart, PerformanceChart } from './components/Charts';
 import DataTable from './components/DataTable';
 import Pagination from './components/Pagination';
-import Loader from './components/Loader';
+import Loader, { StatCardSkeleton, ChartsSkeleton, DataTableSkeleton } from './components/Loader';
 import ComparisonView from './components/ComparisonView';
 import ComparisonModal from './components/ComparisonModal';
 import HelpModal from './components/HelpModal';
 import InsightsPanel from './components/InsightsPanel';
-import { BarChartIcon } from './components/Icons';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useAppContext } from './state/appContext';
 import { useFilteredData } from './hooks/useFilteredData';
 
@@ -21,6 +21,8 @@ const App: React.FC = () => {
     const filteredAndSortedData = useFilteredData();
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
+
+    const showSkeleton = loadingState.isLoading || !activeSnapshot;
 
     const paginatedData = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -69,40 +71,61 @@ const App: React.FC = () => {
                 {isComparisonMode && (
                     <ComparisonView info={comparisonInfo} />
                 )}
-                <Controls />
+                <ErrorBoundary>
+                    <Controls />
+                </ErrorBoundary>
                 
-                <InsightsPanel insights={insights} />
-
-                {displayedStats && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
-                        <StatCard label="Total Products" value={displayedStats.current.totalProducts.toLocaleString()} change={displayedStats.change.totalProducts} />
-                        <StatCard label="Available Inventory" value={displayedStats.current.totalAvailable.toLocaleString()} change={displayedStats.change.totalAvailable} />
-                        <StatCard label="Pending Removals" value={displayedStats.current.totalPending.toLocaleString()} change={displayedStats.change.totalPending} />
-                        <StatCard label="Sell-Through" value={`${displayedStats.current.sellThroughRate}%`} change={displayedStats.change.sellThroughRate} isPercentage={true} />
-                        <StatCard label="Avg Days in Inv." value={displayedStats.current.avgDaysInventory.toString()} change={displayedStats.change.avgDaysInventory} />
-                        <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
-                    </div>
-                )}
-                
-                {activeSnapshot && !isComparisonMode && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
-                        <AgeDistributionChart data={activeSnapshot.data} />
-                        <RiskChart data={activeSnapshot.data} />
-                        <PerformanceChart data={activeSnapshot.data} />
-                    </div>
+                {/* Don't show insights panel during skeleton load */}
+                {!showSkeleton && (
+                    <ErrorBoundary>
+                        <InsightsPanel insights={insights} />
+                    </ErrorBoundary>
                 )}
 
-                {filteredAndSortedData.length > 0 ? (
+                {showSkeleton ? (
                     <>
-                        <DataTable data={paginatedData} />
-                        <Pagination totalPages={totalPages} />
+                        {/* Stat Cards Skeleton */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
+                           {Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)}
+                        </div>
+                        {/* Charts Skeleton */}
+                        <ChartsSkeleton />
+                        {/* Data Table Skeleton with conditional welcome message */}
+                        <DataTableSkeleton isInitialState={!loadingState.isLoading && !activeSnapshot} />
                     </>
                 ) : (
-                     <div className="text-center py-20 text-gray-500 bg-gray-50">
-                        <BarChartIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-xl font-semibold">Welcome to WesBI</h2>
-                        <p className="mt-2">Upload one or more FBA Snapshot CSV files to get started.</p>
-                    </div>
+                    <>
+                        {/* Real Stat Cards */}
+                        {displayedStats && (
+                            <ErrorBoundary>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
+                                    <StatCard label="Total Products" value={displayedStats.current.totalProducts.toLocaleString()} change={displayedStats.change.totalProducts} />
+                                    <StatCard label="Available Inventory" value={displayedStats.current.totalAvailable.toLocaleString()} change={displayedStats.change.totalAvailable} />
+                                    <StatCard label="Pending Removals" value={displayedStats.current.totalPending.toLocaleString()} change={displayedStats.change.totalPending} />
+                                    <StatCard label="Sell-Through" value={`${displayedStats.current.sellThroughRate}%`} change={displayedStats.change.sellThroughRate} isPercentage={true} />
+                                    <StatCard label="Avg Days in Inv." value={displayedStats.current.avgDaysInventory.toString()} change={displayedStats.change.avgDaysInventory} />
+                                    <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
+                                </div>
+                            </ErrorBoundary>
+                        )}
+                        
+                        {/* Real Charts */}
+                        {activeSnapshot && !isComparisonMode && (
+                            <ErrorBoundary>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
+                                    <AgeDistributionChart data={activeSnapshot.data} />
+                                    <RiskChart data={activeSnapshot.data} />
+                                    <PerformanceChart data={activeSnapshot.data} />
+                                </div>
+                            </ErrorBoundary>
+                        )}
+
+                        {/* Real Data Table and Pagination */}
+                        <ErrorBoundary>
+                            <DataTable data={paginatedData} />
+                            {totalPages > 1 && <Pagination totalPages={totalPages} />}
+                        </ErrorBoundary>
+                    </>
                 )}
             </div>
         </div>
