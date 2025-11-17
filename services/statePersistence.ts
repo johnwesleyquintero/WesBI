@@ -57,8 +57,9 @@ export const loadState = (): Partial<AppState> | undefined => {
       const sortConfig = parsedState.sortConfig as any;
 
       // Legacy check: An older app version saved sortConfig as an object.
-      // If we find this format, we transparently migrate it to the current array-based format.
-      if (typeof sortConfig === 'object' && !Array.isArray(sortConfig) && sortConfig.key && sortConfig.direction) {
+      // We transparently migrate it to the current array-based format.
+      // Added a check for `sortConfig` being non-null to prevent crash on corrupted data.
+      if (sortConfig && typeof sortConfig === 'object' && !Array.isArray(sortConfig) && sortConfig.key && sortConfig.direction) {
         console.log("WesBI: Migrating legacy sort configuration to new format.");
         parsedState.sortConfig = [sortConfig];
       } 

@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from './Icons';
 
@@ -10,10 +9,15 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, change, isPercentage = false }) => {
-    const isPositive = change >= 0;
+    const isPositive = change > 0;
+    const isNegative = change < 0;
     const changeText = `${isPositive ? '+' : ''}${change.toFixed(1)}${isPercentage ? '%' : ''}`;
 
-    const changeColorClasses = isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+    const changeColorClasses = isPositive
+        ? 'bg-green-100 text-green-700'
+        : isNegative
+        ? 'bg-red-100 text-red-700'
+        : 'bg-gray-100 text-gray-700';
 
     return (
         <div className="bg-white rounded-xl p-5 text-center shadow-md border-l-4 border-[#9c4dff] transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col justify-between min-h-[140px]">
@@ -23,8 +27,9 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, change, isPercentage 
             </div>
             <div className="mt-2">
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-flex items-center justify-center ${changeColorClasses}`}>
-                    {isPositive ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
-                    <span className="ml-1">{changeText}</span>
+                    {isPositive && <ChevronUpIcon className="w-3 h-3" />}
+                    {isNegative && <ChevronDownIcon className="w-3 h-3" />}
+                    <span className={isPositive || isNegative ? 'ml-1' : ''}>{changeText}</span>
                 </span>
             </div>
         </div>

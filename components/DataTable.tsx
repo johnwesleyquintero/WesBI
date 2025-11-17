@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
@@ -86,6 +85,12 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
 
     const renderChange = (change: number | undefined, isCurrency = false) => {
         if (change === undefined) return null;
+
+        if (change === 0) {
+            const formattedChange = isCurrency ? formatCurrency(0, 0) : '0';
+            return <div className="text-xs text-gray-500">({formattedChange})</div>;
+        }
+
         const isPositive = change > 0;
         const color = isPositive ? 'text-green-600' : 'text-red-600';
         const formattedChange = isCurrency ? formatCurrency(change, 0) : (isPositive ? '+' : '') + change.toLocaleString();
