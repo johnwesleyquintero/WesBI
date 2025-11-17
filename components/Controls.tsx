@@ -29,6 +29,7 @@ interface UploadZoneProps {
 const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
     ({ title, description, onFileSelect, selectedFiles, onClear, multiple }, ref) => {
         const [isDragOver, setIsDragOver] = React.useState(false);
+        const inputRef = ref as React.RefObject<HTMLInputElement>;
 
         const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
             e.preventDefault();
@@ -53,6 +54,13 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
             }
         };
         
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                inputRef.current?.click();
+            }
+        };
+        
         const fileNames = React.useMemo(() => {
             if (!selectedFiles) return null;
             if (selectedFiles instanceof File) return selectedFiles.name;
@@ -66,7 +74,7 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
             return null;
         }, [selectedFiles]);
 
-        const baseClasses = "relative group flex flex-col items-center justify-center w-full h-full p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200";
+        const baseClasses = "relative group flex flex-col items-center justify-center w-full h-full p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9c4dff]";
         const stateClasses = isDragOver 
             ? "border-purple-500 bg-purple-50" 
             : fileNames 
@@ -76,10 +84,14 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
         return (
             <div 
                 className={`${baseClasses} ${stateClasses}`}
-                onClick={() => (ref as React.RefObject<HTMLInputElement>).current?.click()}
+                onClick={() => inputRef.current?.click()}
+                onKeyDown={handleKeyDown}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                tabIndex={0}
+                role="button"
+                aria-label={`${title}: ${description}`}
             >
                 <input 
                     ref={ref} 
