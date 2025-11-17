@@ -1,6 +1,7 @@
 
 
 
+
 import * as React from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
@@ -186,6 +187,18 @@ const App: React.FC = () => {
                         </ErrorBoundary>
                     </>
                 )}
+
+                <footer className="text-center p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+                    Crafted by Wes. Explore more mini-apps at{' '}
+                    <a 
+                        href="https://wescode.vercel.app/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#6c34ff] hover:underline"
+                    >
+                        wescode.vercel.app
+                    </a>.
+                </footer>
             </div>
             {/* Chatbot and FAB */}
             {aiFeaturesEnabled && (
