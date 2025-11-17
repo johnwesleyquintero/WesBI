@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -6,6 +7,7 @@ import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';
 import { exportToCSV } from '../services/exportUtils';
+import { FILE_PROCESSING_THRESHOLDS } from '../constants';
 
 interface ControlButtonProps {
     onClick: () => void;
@@ -172,6 +174,21 @@ const Controls: React.FC = () => {
 
     const handleProcessFiles = async () => {
         if (snapshotFiles && snapshotFiles.length > 0) {
+            // --- Pre-flight Check for Large Files ---
+            const totalSize = Array.from(snapshotFiles).reduce((sum, file) => sum + file.size, 0);
+            const maxSizeInBytes = FILE_PROCESSING_THRESHOLDS.MAX_FILE_SIZE_MB * 1024 * 1024;
+
+            if (totalSize > maxSizeInBytes) {
+                dispatch({
+                    type: 'ADD_TOAST',
+                    payload: {
+                        type: 'info',
+                        title: 'Processing Large Files',
+                        message: `Your upload is larger than ${FILE_PROCESSING_THRESHOLDS.MAX_FILE_SIZE_MB}MB. Processing may take a moment and the app might be unresponsive.`,
+                    },
+                });
+            }
+
             await processFiles(snapshotFiles, financialFile, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
             // Reset file inputs after processing is complete
             setSnapshotFiles(null);
@@ -378,30 +395,6 @@ const Controls: React.FC = () => {
                     </div>
                 </div>
             </div>
-            <style>{`
-                .filter-select {
-                    width: 100%;
-                    padding: 0.625rem 0.75rem;
-                    border-radius: 0.5rem;
-                    background-color: white;
-                    font-size: 0.875rem;
-                    line-height: 1.25rem;
-                    -webkit-appearance: none;
-                    -moz-appearance: none;
-                    appearance: none;
-                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-                    background-position: right 0.5rem center;
-                    background-repeat: no-repeat;
-                    background-size: 1.5em 1.5em;
-                }
-                .filter-select:focus {
-                    outline: none;
-                    --tw-ring-color: #9c4dff;
-                    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-                    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-                    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-                }
-            `}</style>
         </div>
     );
 };

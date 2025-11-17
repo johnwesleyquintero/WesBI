@@ -80,7 +80,16 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
 
     } catch (error) {
         console.error("Error fetching insights from Gemini:", error);
-        return ["Failed to generate AI insights. Please check your API key and network connection."];
+        if (error instanceof Error) {
+            const errorMessage = error.message.toLowerCase();
+            if (errorMessage.includes('api key not valid')) {
+                return ["AI Insights failed: The provided Gemini API key appears to be invalid. Please check your key in Settings."];
+            }
+            if (errorMessage.includes('quota')) {
+                 return ["AI Insights failed: You have exceeded your request quota for the Gemini API. Please check your Google AI Studio account."];
+            }
+        }
+        return ["Failed to generate AI insights. The model may be temporarily unavailable. Please check your network connection and try again."];
     }
 };
 
@@ -116,6 +125,15 @@ export const getStrategyFromGemini = async (data: ProductData[], goal: string, a
 
     } catch (error) {
         console.error("Error fetching strategy from Gemini:", error);
-        return "Failed to generate AI Strategy. Please check your API key and network connection. The model may also be overloaded.";
+        if (error instanceof Error) {
+             const errorMessage = error.message.toLowerCase();
+            if (errorMessage.includes('api key not valid')) {
+                return "AI Strategy failed: The provided Gemini API key appears to be invalid. Please check your key in Settings.";
+            }
+             if (errorMessage.includes('quota')) {
+                 return "AI Strategy failed: You have exceeded your request quota for the Gemini API. Please check your Google AI Studio account.";
+            }
+        }
+        return "Failed to generate AI Strategy. The model may be temporarily unavailable. Please check your network connection and try again.";
     }
 };

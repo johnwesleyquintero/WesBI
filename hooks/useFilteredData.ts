@@ -12,6 +12,7 @@ import {
     applyCategoryFilter
 } from '../services/filterUtils';
 import type { ProductData, ForecastSettings } from '../types';
+import { FORECAST_CONFIG, VELOCITY_TREND_INDICATOR } from '../constants';
 
 /**
  * Rounds a number up to the nearest standard FBA shipment quantity.
@@ -24,7 +25,7 @@ const roundToShipmentQuantity = (recommendation: number): number => {
         return 0;
     }
 
-    const tiers = [30, 50, 100, 150, 200, 250, 300, 400, 500];
+    const tiers = FORECAST_CONFIG.SHIPMENT_QUANTITY_TIERS;
     
     // Find the first tier that is greater than or equal to the recommendation
     for (const tier of tiers) {
@@ -33,10 +34,10 @@ const roundToShipmentQuantity = (recommendation: number): number => {
         }
     }
 
-    // If the recommendation is larger than the highest predefined tier (500),
-    // round up to the nearest 50.
-    // e.g., 501 -> 550, 549 -> 550, 550 -> 550, 551 -> 600
-    return Math.ceil(recommendation / 50) * 50;
+    // If the recommendation is larger than the highest predefined tier,
+    // round up to the nearest configured unit.
+    const roundingUnit = FORECAST_CONFIG.LARGE_SHIPMENT_ROUNDING_UNIT;
+    return Math.ceil(recommendation / roundingUnit) * roundingUnit;
 };
 
 const calculateRestockRecommendation = (item: ProductData, settings: ForecastSettings): number => {
@@ -46,19 +47,20 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     }
 
     const dailySales = item.shippedT30 / 30;
+    const { VELOCITY_TREND, SELL_THROUGH_SAFETY_STOCK } = FORECAST_CONFIG;
     
-    // --- NEW: Trend-Aware Forecasting ---
+    // --- Trend-Aware Forecasting ---
     // Adjust forecast based on recent sales velocity trends.
     let trendAdjustment = 1.0;
-    if (item.velocityTrend !== undefined) {
-        if (item.velocityTrend > 25) { // Significant growth
-            trendAdjustment = 1.25;
-        } else if (item.velocityTrend > 10) { // Moderate growth
-            trendAdjustment = 1.1;
-        } else if (item.velocityTrend < -25) { // Significant decline
-            trendAdjustment = 0.75;
-        } else if (item.velocityTrend < -10) { // Moderate decline
-            trendAdjustment = 0.9;
+    if (item.velocityTrend !== undefined && item.velocityTrend !== VELOCITY_TREND_INDICATOR.NEW_ITEM) {
+        if (item.velocityTrend > VELOCITY_TREND.GROWTH_STRONG_THRESHOLD) {
+            trendAdjustment = VELOCITY_TREND.ADJUSTMENT_STRONG_GROWTH;
+        } else if (item.velocityTrend > VELOCITY_TREND.GROWTH_MODERATE_THRESHOLD) {
+            trendAdjustment = VELOCITY_TREND.ADJUSTMENT_MODERATE_GROWTH;
+        } else if (item.velocityTrend < VELOCITY_TREND.DECLINE_STRONG_THRESHOLD) {
+            trendAdjustment = VELOCITY_TREND.ADJUSTMENT_STRONG_DECLINE;
+        } else if (item.velocityTrend < VELOCITY_TREND.DECLINE_MODERATE_THRESHOLD) {
+            trendAdjustment = VELOCITY_TREND.ADJUSTMENT_MODERATE_DECLINE;
         }
     }
     
@@ -67,10 +69,10 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     // Dynamically adjust safety stock based on sell-through rate.
     // This provides a buffer for high-demand items and reduces overstocking on slow movers.
     let dynamicSafetyStockDays = settings.safetyStock;
-    if (item.sellThroughRate > 75) { // High velocity
-        dynamicSafetyStockDays *= 1.5;
-    } else if (item.sellThroughRate < 25) { // Slow movers
-        dynamicSafetyStockDays *= 0.5;
+    if (item.sellThroughRate > SELL_THROUGH_SAFETY_STOCK.HIGH_RATE_THRESHOLD) {
+        dynamicSafetyStockDays *= SELL_THROUGH_SAFETY_STOCK.HIGH_RATE_MULTIPLIER;
+    } else if (item.sellThroughRate < SELL_THROUGH_SAFETY_STOCK.LOW_RATE_THRESHOLD) {
+        dynamicSafetyStockDays *= SELL_THROUGH_SAFETY_STOCK.LOW_RATE_MULTIPLIER;
     }
 
     const demandDuringLeadTime = forecastedDailySales * settings.leadTime;

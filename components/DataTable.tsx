@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
+import { RISK_SCORE_THRESHOLDS, SELL_THROUGH_THRESHOLDS } from '../constants';
 
 interface DataTableProps {
     data: ProductData[];
@@ -63,16 +64,16 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
             if ((item.inventoryChange ?? 0) < 0) return 'bg-red-100/50';
             return 'bg-gray-100/50';
         }
-        if (item.riskScore > 85) return 'bg-red-100 border-l-4 border-red-500';
-        if (item.riskScore > 70) return 'bg-amber-100 border-l-4 border-amber-500';
+        if (item.riskScore > RISK_SCORE_THRESHOLDS.HIGH_RISK) return 'bg-red-100 border-l-4 border-red-500';
+        if (item.riskScore > RISK_SCORE_THRESHOLDS.MEDIUM_RISK) return 'bg-amber-100 border-l-4 border-amber-500';
         if (item.recommendedAction.toLowerCase().includes('removal')) return 'bg-yellow-100';
-        if (item.sellThroughRate > 70) return 'bg-green-100';
+        if (item.sellThroughRate > SELL_THROUGH_THRESHOLDS.HOT_ITEM) return 'bg-green-100';
         return '';
     };
 
     const getStatusBadgeClass = (action: string) => {
         if (action.toLowerCase().includes('removal')) return 'bg-red-100 text-red-800';
-        if (item.riskScore > 70) return 'bg-amber-100 text-amber-800';
+        if (item.riskScore > RISK_SCORE_THRESHOLDS.MEDIUM_RISK) return 'bg-amber-100 text-amber-800';
         return 'bg-green-100 text-green-800';
     };
     

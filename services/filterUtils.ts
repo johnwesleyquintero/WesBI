@@ -1,5 +1,6 @@
 
 import type { ProductData } from '../types';
+import { STOCK_STATUS_THRESHOLDS } from '../constants';
 
 export const applySearchFilter = (data: ProductData[], search: string): ProductData[] => {
     if (!search) return data;
@@ -46,17 +47,17 @@ export const applyStockStatusFilter = (data: ProductData[], stockStatus: string)
             return data.filter(item => {
                 if (item.shippedT30 <= 0) return false;
                 const daysOfCover = item.available / (item.shippedT30 / 30);
-                return daysOfCover < 30;
+                return daysOfCover < STOCK_STATUS_THRESHOLDS.LOW_STOCK_DAYS;
             });
         case 'high':
              // High stock: more than 180 days of cover, or over 100 units with no sales.
             return data.filter(item => {
                 if (item.shippedT30 > 0) {
                     const daysOfCover = item.available / (item.shippedT30 / 30);
-                    return daysOfCover > 180;
+                    return daysOfCover > STOCK_STATUS_THRESHOLDS.HIGH_STOCK_DAYS;
                 }
                 // If no sales, consider it high stock if there are many units sitting.
-                return item.available > 100;
+                return item.available > STOCK_STATUS_THRESHOLDS.STRANDED_HIGH_UNITS;
             });
         case 'stranded':
             // Stranded: has inventory but no sales in the last 30 days.

@@ -1,5 +1,6 @@
 
 import type { ProductData, Stats, Snapshot } from '../types';
+import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR } from '../constants';
 
 /**
  * Safely parses a value into a number. Returns 0 if the value is not a valid number.
@@ -20,15 +21,16 @@ const parseNumeric = (val: any): number => {
 export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number => {
     let score = 0;
     const { totalInvAgeDays, available, shippedT30, pendingRemoval } = item;
+    const { AGE, DAYS_OF_COVER, REMOVAL_RATIO, MAX_SCORE } = RISK_SCORE_CONFIG;
 
     // --- Component 1: Inventory Age (Max 40 points) ---
     // Older inventory carries higher risk of storage fees and obsolescence.
-    if (totalInvAgeDays > 365) {
-        score += 40;
-    } else if (totalInvAgeDays > 180) {
-        score += 25;
-    } else if (totalInvAgeDays > 90) {
-        score += 15;
+    if (totalInvAgeDays > AGE.THRESHOLD_365_PLUS) {
+        score += AGE.POINTS_365_PLUS;
+    } else if (totalInvAgeDays > AGE.THRESHOLD_181_PLUS) {
+        score += AGE.POINTS_181_TO_365;
+    } else if (totalInvAgeDays > AGE.THRESHOLD_91_PLUS) {
+        score += AGE.POINTS_91_TO_180;
     }
 
     // --- Component 2: Days of Cover (Supply Days) (Max 40 points) ---
@@ -37,15 +39,15 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
     const dailySales = shippedT30 / 30;
     if (dailySales <= 0 && available > 0) {
         // Stranded inventory: stock with no recent sales is a major risk.
-        score += 40;
+        score += DAYS_OF_COVER.POINTS_STRANDED;
     } else if (dailySales > 0) {
         const daysOfCover = available / dailySales;
-        if (daysOfCover > 180) { // Over 6 months of supply
-            score += 35;
-        } else if (daysOfCover > 90) { // 3-6 months of supply
-            score += 20;
-        } else if (daysOfCover > 60) { // 2-3 months of supply
-            score += 10;
+        if (daysOfCover > DAYS_OF_COVER.THRESHOLD_180_DAYS) {
+            score += DAYS_OF_COVER.POINTS_OVER_180;
+        } else if (daysOfCover > DAYS_OF_COVER.THRESHOLD_90_DAYS) {
+            score += DAYS_OF_COVER.POINTS_90_TO_180;
+        } else if (daysOfCover > DAYS_OF_COVER.THRESHOLD_60_DAYS) {
+            score += DAYS_OF_COVER.POINTS_60_TO_90;
         }
     }
 
@@ -54,12 +56,12 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
     const totalStock = available + pendingRemoval;
     if (totalStock > 0) {
         const removalRatio = pendingRemoval / totalStock;
-        if (removalRatio > 0.5) { // Over 50% of stock is pending removal
-            score += 20;
-        } else if (removalRatio > 0.2) { // Over 20%
-            score += 10;
-        } else if (removalRatio > 0.1) { // Over 10%
-            score += 5;
+        if (removalRatio > REMOVAL_RATIO.THRESHOLD_50_PERCENT) {
+            score += REMOVAL_RATIO.POINTS_OVER_50_PERCENT;
+        } else if (removalRatio > REMOVAL_RATIO.THRESHOLD_20_PERCENT) {
+            score += REMOVAL_RATIO.POINTS_20_TO_50_PERCENT;
+        } else if (removalRatio > REMOVAL_RATIO.THRESHOLD_10_PERCENT) {
+            score += REMOVAL_RATIO.POINTS_10_TO_20_PERCENT;
         }
     }
     
@@ -67,7 +69,7 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
     // overstocking and inventory stagnation. Stockout risk is handled by the
     // restock recommendation and stock status filters.
 
-    return Math.min(Math.round(score), 100);
+    return Math.min(Math.round(score), MAX_SCORE);
 };
 
 /**
@@ -100,11 +102,11 @@ export const processRawData = (rawData: any[], financialDataMap: Map<string, { c
 
         const totalInv = invAge0to90 + invAge91to180 + invAge181to270 + invAge271to365 + invAge365plus;
         const avgAge = totalInv > 0 ? (
-            (invAge0to90 * 45) +
-            (invAge91to180 * 135) +
-            (invAge181to270 * 225) +
-            (invAge271to365 * 318) +
-            (invAge365plus * 400) 
+            (invAge0to90 * INVENTORY_AGE_WEIGHTS.DAYS_0_TO_90) +
+            (invAge91to180 * INVENTORY_AGE_WEIGHTS.DAYS_91_TO_180) +
+            (invAge181to270 * INVENTORY_AGE_WEIGHTS.DAYS_181_TO_270) +
+            (invAge271to365 * INVENTORY_AGE_WEIGHTS.DAYS_271_TO_365) +
+            (invAge365plus * INVENTORY_AGE_WEIGHTS.DAYS_365_PLUS) 
         ) / totalInv : 0;
         
         const partialData: Omit<ProductData, 'riskScore'> = {
@@ -164,7 +166,7 @@ export const calculateStats = (data: ProductData[]): Stats => {
         totalDaysWeighted += item.totalInvAgeDays * item.available;
         totalInventoryValue += item.inventoryValue || 0;
         totalPotentialRevenue += item.potentialRevenue || 0;
-        if (item.riskScore > 70) {
+        if (item.riskScore > RISK_SCORE_THRESHOLDS.MEDIUM_RISK) {
             atRiskSKUs++;
             capitalAtRisk += item.inventoryValue || 0;
         }
@@ -202,7 +204,7 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
                 velocityTrend = ((newShipped - oldShipped) / oldShipped) * 100;
             } else if (newShipped > 0) {
                 // Represents a new item that started selling; assign a high positive value.
-                velocityTrend = 999;
+                velocityTrend = VELOCITY_TREND_INDICATOR.NEW_ITEM;
             } else {
                 // No sales in either period.
                 velocityTrend = 0;
@@ -226,7 +228,7 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
             ageChange: newItem.totalInvAgeDays,
             riskScoreChange: newItem.riskScore,
             inventoryValueChange: newItem.inventoryValue,
-            velocityTrend: newItem.shippedT30 > 0 ? 999 : 0, // Treat as a new selling item
+            velocityTrend: newItem.shippedT30 > 0 ? VELOCITY_TREND_INDICATOR.NEW_ITEM : 0, // Treat as a new selling item
         };
     });
 };
