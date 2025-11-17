@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -169,10 +170,10 @@ const Controls: React.FC = () => {
         dispatch({ type: 'UPDATE_FORECAST_SETTINGS', payload: { key, value: numValue } });
     };
 
-    const handleProcessFiles = () => {
+    const handleProcessFiles = async () => {
         if (snapshotFiles && snapshotFiles.length > 0) {
-            processFiles(snapshotFiles, financialFile, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
-            // Reset file inputs after processing
+            await processFiles(snapshotFiles, financialFile, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
+            // Reset file inputs after processing is complete
             setSnapshotFiles(null);
             setFinancialFile(null);
             if(snapshotInputRef.current) snapshotInputRef.current.value = '';

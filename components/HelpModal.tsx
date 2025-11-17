@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon, DollarIcon, XIcon } from './Icons';
@@ -18,7 +19,6 @@ const HelpModal: React.FC = () => {
     const { dispatch } = useAppContext();
 
     const handleClose = () => {
-        // FIX: Corrected typo in dispatch action type.
         dispatch({ type: 'CLOSE_HELP_MODAL' });
     };
 
