@@ -8,16 +8,6 @@ interface DataTableProps {
     data: ProductData[];
 }
 
-const formatCurrency = (value: number | undefined, digits = 2) => {
-    if (value === undefined || isNaN(value)) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-    }).format(value);
-};
-
 const SortableHeader: React.FC<{
     columnKey: keyof ProductData;
     title: string;
@@ -83,17 +73,16 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
         return '';
     }
 
-    const renderChange = (change: number | undefined, isCurrency = false) => {
+    const renderChange = (change: number | undefined) => {
         if (change === undefined) return null;
 
         if (change === 0) {
-            const formattedChange = isCurrency ? formatCurrency(0, 0) : '0';
-            return <div className="text-xs text-gray-500">({formattedChange})</div>;
+            return <div className="text-xs text-gray-500">(0)</div>;
         }
 
         const isPositive = change > 0;
         const color = isPositive ? 'text-green-600' : 'text-red-600';
-        const formattedChange = isCurrency ? formatCurrency(change, 0) : (isPositive ? '+' : '') + change.toLocaleString();
+        const formattedChange = (isPositive ? '+' : '') + change.toLocaleString();
         return <div className={`text-xs ${color}`}>({formattedChange})</div>;
     };
     
@@ -141,12 +130,6 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
                 {item.riskScore}
                 {isComparisonMode && renderChange(item.riskScoreChange)}
             </td>
-            <td className="text-right font-mono">
-                {formatCurrency(item.inventoryValue, 0)}
-                {isComparisonMode && renderChange(item.inventoryValueChange, true)}
-            </td>
-            <td className="text-right font-mono">{formatCurrency(item.potentialRevenue, 0)}</td>
-            <td className="text-right font-mono">{formatCurrency(item.grossProfitPerUnit)}</td>
             <td className={`text-right font-mono ${getRestockCellClass(item.restockRecommendation)}`}>
                 {item.restockRecommendation?.toLocaleString() ?? 0}
             </td>
@@ -176,9 +159,6 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
             { key: 'sellThroughRate', title: 'Sell-Through', isNumeric: true },
             { key: 'recommendedAction', title: 'Action' },
             { key: 'riskScore', title: 'Risk Score', isNumeric: true },
-            { key: 'inventoryValue', title: 'Inv. Value', isNumeric: true },
-            { key: 'potentialRevenue', title: 'Potential Rev.', isNumeric: true },
-            { key: 'grossProfitPerUnit', title: 'Profit/Unit', isNumeric: true },
             { key: 'restockRecommendation', title: 'Restock Units', isNumeric: true },
         ];
 

@@ -1,4 +1,5 @@
 
+
 import type { ProductData, Stats, Snapshot } from '../types';
 import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR } from '../constants';
 import { parseNumeric } from './utils';
@@ -64,26 +65,19 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
 };
 
 /**
- * Transforms raw data objects from a CSV into structured ProductData, calculating derived fields
- * and enriching with financial data from a lookup map.
+ * Transforms raw data objects from a CSV into structured ProductData, calculating derived fields.
  * @param {any[]} rawData - Array of row objects from PapaParse.
- * @param {Map<string, { cogs: number; price: number }>} financialDataMap - A map of SKU to its cost and price.
  * @returns {ProductData[]} Array of processed ProductData objects.
  */
-export const processRawData = (rawData: any[], financialDataMap: Map<string, { cogs: number; price: number }>): ProductData[] => {
+export const processRawData = (rawData: any[]): ProductData[] => {
     const mappedData = rawData.map((row): ProductData | null => {
         const sku = (row['sku'] || '').trim();
         if (!sku) {
             return null; // This row is invalid, mark for removal
         }
 
-        const financialLookup = financialDataMap.get(sku);
-
         const available = parseNumeric(row['available']);
         const shippedT30 = parseNumeric(row['units-shipped-t30']);
-        // Precedence: 1. Financial file, 2. FBA file, 3. Default to 0
-        const cogs = financialLookup?.cogs ?? parseNumeric(row['cogs']);
-        const price = financialLookup?.price ?? parseNumeric(row['price']);
 
         const invAge0to90 = parseNumeric(row['inv-age-0-to-90-days']);
         const invAge91to180 = parseNumeric(row['inv-age-91-to-180-days']);
@@ -117,11 +111,6 @@ export const processRawData = (rawData: any[], financialDataMap: Map<string, { c
             sellThroughRate: available + shippedT30 > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0,
             recommendedAction: row['recommended-action'] || 'No Action',
             category: row['category'] || 'Unknown',
-            cogs: cogs,
-            price: price,
-            inventoryValue: available * cogs,
-            potentialRevenue: available * price,
-            grossProfitPerUnit: price - cogs,
         };
 
         const riskScore = calculateRiskScore(partialData);
@@ -137,7 +126,6 @@ export const calculateStats = (data: ProductData[]): Stats => {
         return {
             totalProducts: 0, totalAvailable: 0, totalPending: 0, totalShipped: 0,
             avgDaysInventory: 0, sellThroughRate: 0, atRiskSKUs: 0,
-            totalInventoryValue: 0, capitalAtRisk: 0, totalPotentialRevenue: 0
         };
     }
 
@@ -146,20 +134,14 @@ export const calculateStats = (data: ProductData[]): Stats => {
     let totalShipped = 0;
     let totalDaysWeighted = 0;
     let atRiskSKUs = 0;
-    let totalInventoryValue = 0;
-    let capitalAtRisk = 0;
-    let totalPotentialRevenue = 0;
 
     for (const item of data) {
         totalAvailable += item.available;
         totalPending += item.pendingRemoval;
         totalShipped += item.shippedT30;
         totalDaysWeighted += item.totalInvAgeDays * item.available;
-        totalInventoryValue += item.inventoryValue || 0;
-        totalPotentialRevenue += item.potentialRevenue || 0;
         if (item.riskScore > RISK_SCORE_THRESHOLDS.MEDIUM_RISK) {
             atRiskSKUs++;
-            capitalAtRisk += item.inventoryValue || 0;
         }
     }
     
@@ -175,9 +157,6 @@ export const calculateStats = (data: ProductData[]): Stats => {
       avgDaysInventory,
       sellThroughRate,
       atRiskSKUs,
-      totalInventoryValue,
-      capitalAtRisk,
-      totalPotentialRevenue
     };
 };
 
@@ -207,7 +186,6 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
                 shippedChange: newShipped - oldShipped,
                 ageChange: newItem.totalInvAgeDays - oldItem.totalInvAgeDays,
                 riskScoreChange: newItem.riskScore - oldItem.riskScore,
-                inventoryValueChange: (newItem.inventoryValue || 0) - (oldItem.inventoryValue || 0),
                 velocityTrend: velocityTrend,
             };
         }
@@ -218,7 +196,6 @@ export const compareSnapshots = (newSnapshot: Snapshot, oldSnapshot: Snapshot): 
             shippedChange: newItem.shippedT30,
             ageChange: newItem.totalInvAgeDays,
             riskScoreChange: newItem.riskScore,
-            inventoryValueChange: newItem.inventoryValue,
             velocityTrend: newItem.shippedT30 > 0 ? VELOCITY_TREND_INDICATOR.NEW_ITEM : 0, // Treat as a new selling item
         };
     });

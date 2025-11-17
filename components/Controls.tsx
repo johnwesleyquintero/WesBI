@@ -1,9 +1,10 @@
 
 
 
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';

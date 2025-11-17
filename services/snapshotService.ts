@@ -1,4 +1,5 @@
 
+
 import { Dispatch } from 'react';
 import type { Snapshot } from '../types';
 import type { Action } from '../state/appReducer';
@@ -22,9 +23,8 @@ export const processFiles = async (
     try {
         let progress = 0;
         const progressStep = 90 / files.length;
-        const financialDataMap = new Map(); // Financial lookup file is removed.
 
-        // Process each FBA snapshot, enriching it with financial data if available in the file itself.
+        // Process each FBA snapshot.
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const fileName = file.name.replace('.csv', '');
@@ -34,7 +34,7 @@ export const processFiles = async (
             // First, parse the CSV into raw data
             const rawData = await parseCSV(file);
             // Then, process the raw data to enrich and calculate metrics
-            const data = processRawData(rawData, financialDataMap);
+            const data = processRawData(rawData);
             
             const stats = calculateStats(data);
             newSnapshots[fileName] = { name: fileName, data, stats, timestamp: new Date().toISOString() };

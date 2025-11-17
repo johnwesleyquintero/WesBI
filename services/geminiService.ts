@@ -5,11 +5,9 @@ import type { ProductData } from '../types';
 export const summarizeDataForPrompt = (data: ProductData[]): string => {
     const totalSKUs = data.length;
     const totalUnits = data.reduce((sum, item) => sum + item.available, 0);
-    const totalInventoryValue = data.reduce((sum, item) => sum + (item.inventoryValue || 0), 0);
 
     const atRisk = data.filter(d => d.riskScore > 70);
-    const capitalAtRisk = atRisk.reduce((sum, item) => sum + (item.inventoryValue || 0), 0);
-    const topAtRiskByValue = atRisk.sort((a, b) => (b.inventoryValue || 0) - (a.inventoryValue || 0)).slice(0, 5);
+    const topAtRiskByUnits = atRisk.sort((a, b) => b.available - a.available).slice(0, 5);
 
     const hotItems = data.filter(d => d.sellThroughRate > 70).sort((a, b) => b.sellThroughRate - a.sellThroughRate).slice(0, 5);
     const agedInventory = data.filter(d => d.totalInvAgeDays > 180).sort((a, b) => b.totalInvAgeDays - a.totalInvAgeDays).slice(0, 5);
@@ -17,18 +15,17 @@ export const summarizeDataForPrompt = (data: ProductData[]): string => {
     return `
     FBA Inventory Analysis Report:
     - Total SKUs: ${totalSKUs}
-    - Total Available Units: ${totalUnits}
-    - Total Inventory Value: $${Math.round(totalInventoryValue).toLocaleString()}
-    - Total Capital At Risk (Risk Score > 70): $${Math.round(capitalAtRisk).toLocaleString()}
+    - Total Available Units: ${totalUnits.toLocaleString()}
+    - Total At-Risk SKUs (Risk Score > 70): ${atRisk.length.toLocaleString()}
 
-    Top 5 At-Risk SKUs (by inventory value):
-    ${topAtRiskByValue.map(d => `- SKU: ${d.sku}, Inv. Value: $${Math.round(d.inventoryValue || 0).toLocaleString()}, Risk: ${d.riskScore}, Units: ${d.available}`).join('\n') || 'None'}
+    Top 5 At-Risk SKUs (by available units):
+    ${topAtRiskByUnits.map(d => `- SKU: ${d.sku}, Units: ${d.available.toLocaleString()}, Risk: ${d.riskScore}, Age: ${d.totalInvAgeDays} days`).join('\n') || 'None'}
 
     Top 5 Hot-Selling SKUs (by sell-through rate):
-    ${hotItems.map(d => `- SKU: ${d.sku}, Sell-Through: ${d.sellThroughRate}%, Available: ${d.available}`).join('\n') || 'None'}
+    ${hotItems.map(d => `- SKU: ${d.sku}, Sell-Through: ${d.sellThroughRate}%, Available: ${d.available.toLocaleString()}`).join('\n') || 'None'}
 
     Top 5 Oldest Inventory SKUs (by average age):
-    ${agedInventory.map(d => `- SKU: ${d.sku}, Avg Age: ${d.totalInvAgeDays} days, Available: ${d.available}`).join('\n') || 'None'}
+    ${agedInventory.map(d => `- SKU: ${d.sku}, Avg Age: ${d.totalInvAgeDays} days, Available: ${d.available.toLocaleString()}`).join('\n') || 'None'}
     `;
 };
 

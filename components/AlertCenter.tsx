@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import type { ProductData } from '../types';
 import { AlertTriangleIcon, ClockIcon } from './Icons';
@@ -7,15 +8,6 @@ interface AlertCenterProps {
     data: ProductData[];
     isComparisonMode: boolean;
 }
-
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value);
-};
 
 interface Alert {
     id: string;
@@ -102,7 +94,6 @@ const AlertCenter: React.FC<AlertCenterProps> = ({ data, isComparisonMode }) => 
         const agedInventory = data.filter(item => item.invAge365plus > 0);
         if (agedInventory.length > 0) {
             const totalAgedUnits = agedInventory.reduce((sum, item) => sum + item.invAge365plus, 0);
-            const totalAgedValue = agedInventory.reduce((sum, item) => sum + (item.invAge365plus * (item.cogs || 0)), 0);
             
             generatedAlerts.push({
                 id: 'fee-alert',
@@ -111,8 +102,8 @@ const AlertCenter: React.FC<AlertCenterProps> = ({ data, isComparisonMode }) => 
                 title: `Long-Term Storage Fee Risk: ${agedInventory.length} SKU(s)`,
                 message: (
                     <p>
-                        You have <strong>{totalAgedUnits.toLocaleString()}</strong> units aged over 365 days,
-                        representing ~<strong>{formatCurrency(totalAgedValue)}</strong> in capital at risk for high fees.
+                        You have <strong>{totalAgedUnits.toLocaleString()}</strong> units aged over 365 days.
+                        These units are at high risk for long-term storage fees.
                     </p>
                 ),
             });
