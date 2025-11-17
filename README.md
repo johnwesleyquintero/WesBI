@@ -6,24 +6,30 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
 
 ## ✨ Key Features
 
-*   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like Total Products, Available Inventory, Pending Removals, Sell-Through Rate, Average Inventory Age, and At-Risk SKUs.
-*   **AI-Powered Insights (Gemini):** Automatically generate concise, actionable business insights from your data. The system analyzes your inventory summary and provides recommendations to increase profit, reduce fees, and improve overall inventory health.
-*   **AI Strategy Session (Gemini):** Go beyond insights and generate a complete, step-by-step operational playbook. Select a high-level business goal (e.g., 'Liquidate High-Risk Inventory'), and the AI will analyze your current data to create a detailed, actionable plan to achieve your objective.
-*   **Mission Control:** Turn your AI-generated strategy into a living, trackable mission. Once you start a mission, a new "Mission Control" panel appears on your dashboard, featuring a live KPI chart that tracks your progress against the mission's goal with every new snapshot you upload, and an interactive checklist of the AI's action plan.
-*   **Snapshot Comparison Mode:** Upload two different snapshot files and activate "Comparison Mode" to track trends and changes over time. See per-SKU deltas for inventory levels, sales velocity, and risk scores directly within the data table and summary cards.
-*   **Restock Forecasting:** Proactively manage your inventory with calculated restock recommendations for each SKU. Fine-tune the forecast by adjusting key parameters like Supplier Lead Time, Safety Stock days, and overall Demand Forecast percentage.
-*   **Rich Data Visualization:**
-    *   **Inventory Age Distribution:** Instantly see how much of your stock is aging and identify potential long-term storage fee risks.
-    *   **Top At-Risk SKUs:** A bar chart highlighting products with the highest risk scores, helping you prioritize action.
-    *   **Sell-Through Performance:** Identify your fastest-moving products to inform restocking and marketing decisions.
-*   **Advanced Data Table:**
-    *   **Powerful Filtering & Search:** Instantly search by SKU, ASIN, or Product Name. Drill down into your data with comprehensive filters for Inventory Age, Recommended Action, Stock Status (Low, High, Stranded), and Min/Max Stock levels.
-    *   **Dynamic Sorting:** Sort your entire dataset by any metric to quickly find what you need.
-    *   **Conditional Highlighting:** Rows are automatically color-coded based on risk score, sales velocity, and recommended actions, drawing your attention to the most critical items.
-    *   **Customizable Pagination:** Adjust the number of rows displayed per page (30, 50, 100, or 250) for flexible data analysis.
-*   **Multi-File Processing & Export:** Upload and process multiple FBA snapshot CSVs at once for a consolidated view. Export your current filtered and sorted data to a new CSV file with a single click.
-*   **State Persistence:** Your user settings—including filters, sort preferences, forecast configurations, and items per page—are automatically saved in your browser, providing a seamless experience across sessions.
-*   **Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
+*   **Interactive Dashboard:** Get a high-level overview of your entire FBA operation with key metrics like Total SKUs, Available Inventory, Pending Removals, Sell-Through Rate, Average Inventory Age, and At-Risk SKUs.
+
+*   **AI Intelligence Layer (Powered by Google Gemini):**
+    *   **Automated Insights Panel:** As soon as you process a snapshot, the app automatically generates concise, actionable business insights, helping you spot opportunities and risks immediately.
+    *   **AI Strategy Session & Mission Control:** Go beyond insights and generate a complete, step-by-step operational playbook. Select a high-level business goal (e.g., 'Liquidate High-Risk Inventory'), and the AI will create a detailed plan. You can then launch this plan as a trackable "Mission" with a live KPI chart and an interactive checklist right on your dashboard.
+    *   **Context-Aware Chatbot:** Have a conversation with your data. The AI chatbot is primed with a summary of your active snapshot, allowing you to ask specific questions and get detailed answers in a natural, conversational way.
+
+*   **Deep Data Analysis & Comparison:**
+    *   **Snapshot Comparison Mode:** Upload two different snapshot files to track trends over time. The dashboard and data table instantly switch to show per-SKU deltas for inventory levels, sales velocity, and risk scores.
+    *   **Advanced Data Table:**
+        *   **Powerful Filtering & Search:** Instantly search by SKU, ASIN, or Product Name. Drill down with filters for Inventory Age, Recommended Action, Stock Status (Low, High, Stranded), and more.
+        *   **Multi-Column Sorting:** Sort your entire dataset by any metric. Hold `Shift` and click multiple column headers to apply secondary and tertiary sorting.
+        *   **Conditional Highlighting:** Rows are automatically color-coded based on risk score, sales velocity, and recommended actions.
+    *   **Customizable Pagination:** Adjust the number of rows displayed per page (30, 50, 100, or 250).
+
+*   **Operational & Forecasting Tools:**
+    *   **Proactive Alert Center:** Automatically identifies and flags critical operational issues, such as stockout risks, sales stagnation trends (in comparison mode), and SKUs accruing long-term storage fees.
+    *   **Restock Forecasting:** Proactively manage your inventory with calculated restock recommendations. Fine-tune forecasts by adjusting Supplier Lead Time, Safety Stock days, and overall Demand Forecast percentage.
+    *   **CSV Export:** Export your current filtered and sorted data to a new CSV file with a single click.
+
+*   **Robust User Experience:**
+    *   **State Persistence:** Your user settings—including filters, sort preferences, forecast configurations, API key, and items per page—are automatically saved in your browser.
+    *   **In-App User Guide:** A comprehensive help modal (accessible via the **?** icon) explains every feature in detail.
+    *   **Fully Responsive:** The entire interface is designed to work seamlessly on desktop, tablet, and mobile devices.
 
 ## 🛠️ Technology Stack
 
@@ -34,41 +40,47 @@ This project is built as a modern, self-contained single-page application, lever
     *   **TypeScript:** For robust, type-safe code that is easier to maintain and scale.
     *   **Tailwind CSS:** For rapid, utility-first styling and a clean, modern design.
 *   **Artificial Intelligence:**
-    *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights" and "AI Strategy Session" features, providing sophisticated analysis of inventory data.
+    *   **Google Gemini API (`@google/genai`):** Powers the "AI-Powered Insights," "AI Strategy Session," and "Chatbot" features.
 *   **Data Handling & Visualization:**
-    *   **PapaParse:** A high-performance, in-browser CSV parser used to efficiently process FBA snapshot files directly in the browser.
-    *   **Recharts:** A composable charting library built on React components for creating beautiful and interactive data visualizations.
+    *   **PapaParse:** A high-performance, in-browser CSV parser used to efficiently process FBA snapshot files.
+    *   **Recharts:** A composable charting library built on React components for creating interactive data visualizations.
 
 ## ⚙️ How to Use
 
-1.  **Launch the Application:** Open the application in your web browser.
-2.  **Get Help:** For a detailed walkthrough of all features, click the **(?)** icon in the top-right corner of the header to open the in-app **User Guide**.
+1.  **Launch the Application:** Open the app in your browser.
+
+2.  **Configure AI (Recommended):**
+    *   Click the **cog icon (⚙️)** in the header to open Settings.
+    *   Enter your personal **Google Gemini API Key**. This unlocks all AI features. Your key is saved securely in your browser's local storage and is never sent to our servers.
+    *   You can also toggle AI features on or off from here.
+
 3.  **Upload Your Data:**
-    *   Click the **"Upload & Process"** button and select one or more of your FBA Inventory Snapshot `.csv` files.
-    *   The application will automatically parse the files, calculate metrics, and generate AI insights.
+    *   Drag and drop one or more of your FBA Inventory Snapshot `.csv` files into the **"FBA Snapshots"** zone.
+    *   Click **"Process Files"**. The app will parse the files, calculate all metrics, and generate AI insights.
+
 4.  **Analyze Your Dashboard:**
-    *   The dashboard will load with summary statistics, AI-generated insights, and interactive charts.
-    *   Scroll down to the data table to see a detailed breakdown of every SKU.
+    *   Review the top-level **Stat Cards** for a quick health check.
+    *   Read the **AI-Powered Insights** for immediate, actionable advice.
+    *   Examine the **Charts** for a visual breakdown of inventory age and risk.
+
 5.  **Generate an AI Strategy & Start a Mission:**
-    *   Click the **"AI Strategy Session"** button.
-    *   Select a high-level business goal (e.g., "Liquidate High-Risk Inventory").
+    *   Click the **"AI Strategy"** button.
+    *   Select a business goal (e.g., "Reduce Long-Term Storage Fees").
     *   Click **"Generate Plan"** to receive a detailed, step-by-step action plan.
-    *   Once you're happy with the plan, click **"Start Mission"**. This will add the new "Mission Control" panel to your dashboard.
-6.  **Track Your Mission:**
-    *   The **Mission Control** panel shows a live chart of your mission's main KPI. This chart will update as you upload new snapshots.
-    *   Use the interactive checklist to mark off tasks as you complete them in Seller Central.
-7.  **Filter, Sort, and Forecast:**
-    *   Use the search bar and filter dropdowns to narrow down your data.
-    *   Click on any column header in the data table to sort the data.
-    *   Adjust the **Restock Forecast Settings** to get tailored reordering recommendations.
-8.  **Compare Snapshots:**
-    *   Ensure at least two snapshots are loaded.
-    *   Click the **"Compare..."** button. A modal will appear.
-    *   Select your "Base" (older) and "Compare" (newer) snapshots and confirm.
-    *   The dashboard and data table will now show the changes between the two snapshots.
-    *   Click **"Exit Comparison"** to return to the single snapshot view.
-9.  **Export Data:**
-    *   Click the **"Export"** button at any time to download the current data view (including all filters and sorting) as a new CSV file.
+    *   Click **"Start Mission"**. A **Mission Control** panel will now appear on your dashboard, allowing you to track your progress with a live KPI chart and an interactive checklist.
+
+6.  **Drill Down and Investigate:**
+    *   Use the **search bar** and **filters** to isolate specific products.
+    *   Click on column headers to sort the data. Hold **Shift** while clicking to sort by multiple columns.
+    *   Use the **Chatbot** (bottom-right icon) to ask specific questions about the data.
+
+7.  **Compare Snapshots:**
+    *   After loading at least two snapshots, click the **"Compare..."** button.
+    *   Select your "Base" (older) and "Compare" (newer) snapshots.
+    *   The dashboard will now show the changes (deltas) between the two periods.
+
+8.  **Export Your View:**
+    *   Click the **"Export"** button at any time to download the currently displayed data (with all filters and sorting applied) as a new CSV file.
 
 ---
 
