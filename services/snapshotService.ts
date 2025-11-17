@@ -2,13 +2,12 @@
 import { Dispatch } from 'react';
 import type { Snapshot } from '../types';
 import type { Action } from '../state/appReducer';
-import { parseCSV, parseFinancialCSV } from './csvParser';
+import { parseCSV } from './csvParser';
 import { calculateStats, processRawData } from './dataProcessor';
 import { getInsightsFromGemini } from './geminiService';
 
 export const processFiles = async (
     files: FileList, 
-    financialFile: File | null,
     currentSnapshots: Record<string, Snapshot>,
     currentActiveKey: string | null,
     settings: { apiKey: string, aiFeaturesEnabled: boolean },
@@ -22,17 +21,10 @@ export const processFiles = async (
 
     try {
         let progress = 0;
-        const progressStep = 90 / (files.length + (financialFile ? 1 : 0));
+        const progressStep = 90 / files.length;
+        const financialDataMap = new Map(); // Financial lookup file is removed.
 
-        // Step 1: Parse the financial data file first (if it exists)
-        let financialDataMap = new Map();
-        if (financialFile) {
-            dispatch({ type: 'PROCESS_FILES_PROGRESS', payload: { message: `Processing financial data...`, progress: Math.round(progress) } });
-            financialDataMap = await parseFinancialCSV(financialFile);
-            progress += progressStep;
-        }
-
-        // Step 2: Process each FBA snapshot, enriching it with the financial data
+        // Process each FBA snapshot, enriching it with financial data if available in the file itself.
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const fileName = file.name.replace('.csv', '');

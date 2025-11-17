@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon, DollarIcon, XIcon } from './Icons';
@@ -48,18 +49,8 @@ const HelpModal: React.FC = () => {
                 
                 <div className="p-6 overflow-y-auto">
                     <HelpSection title="Getting Started" icon={<RocketIcon />}>
-                        <p>Drag and drop your FBA Snapshot <code>.csv</code> file(s) into the <strong>"FBA Snapshots"</strong> zone, or click it to browse. To add financial data, do the same with the <strong>"Financials Lookup"</strong> zone. When your files are selected, click <strong>"Process Files"</strong> to start the analysis.</p>
-                    </HelpSection>
-
-                     <HelpSection title="Financial Data Integration" icon={<DollarIcon />}>
-                        <p>To calculate key financial metrics like Inventory Value and Capital at Risk, you need to provide a separate financial lookup file. This file links your operational inventory data to your financial data.</p>
-                        <p>Create a simple <code>.csv</code> file with three columns:</p>
-                        <ul className="list-disc list-inside pl-4 space-y-1 font-mono text-xs bg-gray-100 p-3 rounded-md">
-                           <li><strong>sku:</strong> The exact SKU to match the FBA snapshot.</li>
-                           <li><strong>cogs:</strong> Your Cost of Goods Sold for that SKU.</li>
-                           <li><strong>price:</strong> The standard sale price for that SKU.</li>
-                        </ul>
-                         <p>Drag and drop this file into the <strong>"Financials Lookup"</strong> zone. The app will automatically join this data with your FBA snapshot using the SKU as the key.</p>
+                        <p>Drag and drop your FBA Snapshot <code>.csv</code> file(s) into the <strong>"FBA Snapshots"</strong> zone, or click it to browse. When your files are selected, click <strong>"Process Files"</strong> to start the analysis.</p>
+                        <p>To enable financial calculations like Inventory Value and Capital at Risk, ensure your FBA Snapshot CSV includes <strong>'cogs'</strong> and <strong>'price'</strong> columns for each SKU.</p>
                     </HelpSection>
 
                     <HelpSection title="The Dashboard" icon={<BarChartIcon className="w-5 h-5" />}>

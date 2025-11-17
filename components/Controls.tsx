@@ -1,5 +1,6 @@
 
 
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -148,10 +149,8 @@ const Controls: React.FC = () => {
 
     const [searchInput, setSearchInput] = React.useState(filters.search);
     const [snapshotFiles, setSnapshotFiles] = React.useState<FileList | null>(null);
-    const [financialFile, setFinancialFile] = React.useState<File | null>(null);
 
     const snapshotInputRef = React.useRef<HTMLInputElement>(null);
-    const financialInputRef = React.useRef<HTMLInputElement>(null);
     const filteredData = useFilteredData();
 
     // Debounce search input
@@ -201,12 +200,10 @@ const Controls: React.FC = () => {
                 });
             }
 
-            await processFiles(snapshotFiles, financialFile, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
+            await processFiles(snapshotFiles, snapshots, activeSnapshotKey, { apiKey, aiFeaturesEnabled }, dispatch);
             // Reset file inputs after processing is complete
             setSnapshotFiles(null);
-            setFinancialFile(null);
             if(snapshotInputRef.current) snapshotInputRef.current.value = '';
-            if(financialInputRef.current) financialInputRef.current.value = '';
         }
     };
     
@@ -262,9 +259,9 @@ const Controls: React.FC = () => {
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {/* File Upload Section */}
-                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div className="lg:col-span-1">
                      <UploadZone
                         ref={snapshotInputRef}
                         title="FBA Snapshots"
@@ -277,24 +274,12 @@ const Controls: React.FC = () => {
                          }}
                         multiple={true}
                      />
-                     <UploadZone
-                        ref={financialInputRef}
-                        title="Financials Lookup"
-                        description="Drop a single CSV (Optional)"
-                        onFileSelect={(file) => setFinancialFile(file as File)}
-                        selectedFiles={financialFile}
-                        onClear={() => {
-                            setFinancialFile(null);
-                            if (financialInputRef.current) financialInputRef.current.value = '';
-                        }}
-                        multiple={false}
-                     />
                  </div>
-                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <ControlButton 
                         onClick={handleProcessFiles} 
                         disabled={!snapshotFiles || snapshotFiles.length === 0}
-                        className="bg-[#9c4dff] text-white hover:bg-[#7a33ff] md:col-span-2 lg:col-span-1"
+                        className="bg-[#9c4dff] text-white hover:bg-[#7a33ff] sm:col-span-2 lg:col-span-1"
                     >
                         <RocketIcon /> Process Files
                     </ControlButton>
