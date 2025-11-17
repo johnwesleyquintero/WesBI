@@ -10,6 +10,7 @@ export interface AppState {
     isHelpModalOpen: boolean;
     isSettingsModalOpen: boolean;
     isStrategyModalOpen: boolean;
+    isChatbotOpen: boolean;
     comparisonSnapshotKeys: { base: string | null; compare: string | null };
     insights: string[];
     filters: Filters;
@@ -33,6 +34,7 @@ export const initialState: AppState = {
     isHelpModalOpen: false,
     isSettingsModalOpen: false,
     isStrategyModalOpen: false,
+    isChatbotOpen: false,
     comparisonSnapshotKeys: { base: null, compare: null },
     insights: [],
     filters: {
@@ -69,6 +71,7 @@ export type Action =
     | { type: 'CLOSE_SETTINGS_MODAL' }
     | { type: 'OPEN_STRATEGY_MODAL' }
     | { type: 'CLOSE_STRATEGY_MODAL' }
+    | { type: 'TOGGLE_CHATBOT' }
     | { type: 'SAVE_SETTINGS', payload: { apiKey: string; aiFeaturesEnabled: boolean } }
     | { type: 'START_COMPARISON', payload: { base: string, compare: string } }
     | { type: 'UPDATE_FILTER', payload: { key: keyof Filters, value: any } }
@@ -178,6 +181,8 @@ export const appReducer = (state: AppState, action: Action): AppState => {
             return { ...state, isStrategyModalOpen: true };
         case 'CLOSE_STRATEGY_MODAL':
             return { ...state, isStrategyModalOpen: false };
+        case 'TOGGLE_CHATBOT':
+            return { ...state, isChatbotOpen: !state.isChatbotOpen };
         case 'SAVE_SETTINGS':
             return {
                 ...state,

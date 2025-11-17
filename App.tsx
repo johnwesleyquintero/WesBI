@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
@@ -17,6 +18,8 @@ import InsightsPanel from './components/InsightsPanel';
 import AlertCenter from './components/AlertCenter';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/ToastContainer';
+import Chatbot from './components/Chatbot';
+import { ChatbotIcon } from './components/Icons';
 import { useAppContext } from './state/appContext';
 import { useFilteredData } from './hooks/useFilteredData';
 
@@ -30,8 +33,8 @@ const formatCurrency = (value: number) => {
 };
 
 const App: React.FC = () => {
-    const { state } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
+    const { state, dispatch } = useAppContext();
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, isChatbotOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
 
     // State to track if the Recharts script has been loaded.
     const [rechartsReady, setRechartsReady] = React.useState(!!window.Recharts);
@@ -194,6 +197,20 @@ const App: React.FC = () => {
                     </>
                 )}
             </div>
+            {/* Chatbot and FAB */}
+            {aiFeaturesEnabled && (
+                <>
+                    <button
+                        onClick={() => dispatch({ type: 'TOGGLE_CHATBOT' })}
+                        className="fixed bottom-8 right-8 bg-gradient-to-br from-[#9c4dff] to-[#6c34ff] text-white p-4 rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9c4dff] transition-all duration-300 z-40 transform hover:scale-110"
+                        aria-label="Toggle chatbot"
+                        title="Open WesBI Chat"
+                    >
+                        <ChatbotIcon className="w-8 h-8" />
+                    </button>
+                    {isChatbotOpen && <Chatbot />}
+                </>
+            )}
         </div>
     );
 };

@@ -1,7 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ProductData } from '../types';
 
-const summarizeDataForPrompt = (data: ProductData[]): string => {
+// FIX: Export 'summarizeDataForPrompt' to allow its use in other modules.
+export const summarizeDataForPrompt = (data: ProductData[]): string => {
     const totalSKUs = data.length;
     const totalUnits = data.reduce((sum, item) => sum + item.available, 0);
     const totalInventoryValue = data.reduce((sum, item) => sum + (item.inventoryValue || 0), 0);
