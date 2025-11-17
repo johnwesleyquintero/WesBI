@@ -47,8 +47,8 @@ export const ChartsSkeleton: React.FC = () => {
 
 // --- Data Table Skeleton ---
 export const DataTableSkeleton: React.FC<{ isInitialState: boolean }> = ({ isInitialState }) => {
-    const headers = ['SKU', 'ASIN', 'Product Name', 'Condition', 'Available', 'Pending Removal', 'Avg Inv Age', 'Shipped T30', 'Sell-Through', 'Action', 'Risk Score', 'Restock Units'];
-    const numericIndexes = [4, 5, 6, 7, 8, 10, 11];
+    const headers = ['SKU', 'ASIN', 'Product Name', 'Condition', 'Available', 'Pending Removal', 'Avg Inv Age', 'Shipped T30', 'Sell-Through', 'Action', 'Risk Score', 'Inv. Value', 'Potential Rev.', 'Profit/Unit', 'Restock Units'];
+    const numericIndexes = [4, 5, 6, 7, 8, 10, 11, 12, 13, 14];
     const rowCount = 10;
 
     const renderSkeletonRow = (key: number) => (
@@ -64,6 +64,9 @@ export const DataTableSkeleton: React.FC<{ isInitialState: boolean }> = ({ isIni
             <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-10 ml-auto" /></td>
             <td className="p-3"><SkeletonPlaceholder className="h-5 w-24" /></td>
             <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-10 ml-auto" /></td>
+            <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-12 ml-auto" /></td>
+            <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-12 ml-auto" /></td>
+            <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-12 ml-auto" /></td>
             <td className="p-3 text-right"><SkeletonPlaceholder className="h-5 w-12 ml-auto" /></td>
         </tr>
     );

@@ -58,15 +58,25 @@ export const loadState = (): Partial<AppState> | undefined => {
 
       // Legacy check: An older app version saved sortConfig as an object.
       // We transparently migrate it to the current array-based format.
-      // Added a check for `sortConfig` being non-null to prevent crash on corrupted data.
       if (sortConfig && typeof sortConfig === 'object' && !Array.isArray(sortConfig) && sortConfig.key && sortConfig.direction) {
         console.log("WesBI: Migrating legacy sort configuration to new format.");
         parsedState.sortConfig = [sortConfig];
-      } 
-      // Integrity check: If sortConfig is not an array, it's an invalid format.
-      // We discard it to allow the app to fall back to its default sort setting.
-      else if (!Array.isArray(sortConfig)) {
-        console.warn("WesBI: Discarding invalid 'sortConfig' from localStorage as it is not an array.");
+      }
+      // Integrity check: ensure sortConfig is a valid array of SortCriterion objects.
+      else if (Array.isArray(sortConfig)) {
+        const isValidArray = sortConfig.every(item =>
+            item && typeof item === 'object' &&
+            'key' in item && typeof item.key === 'string' &&
+            'direction' in item && (item.direction === 'asc' || item.direction === 'desc')
+        );
+        if (!isValidArray) {
+            console.warn("WesBI: Discarding invalid 'sortConfig' from localStorage as it contains malformed elements.");
+            delete parsedState.sortConfig;
+        }
+      }
+      // If it's neither the legacy object nor a valid array, it's invalid.
+      else {
+        console.warn("WesBI: Discarding invalid 'sortConfig' from localStorage due to unexpected format.");
         delete parsedState.sortConfig;
       }
     }
