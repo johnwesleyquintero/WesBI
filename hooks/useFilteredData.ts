@@ -72,6 +72,7 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     let dynamicSafetyStockDays = settings.safetyStock;
     if (item.sellThroughRate > SELL_THROUGH_SAFETY_STOCK.HIGH_RATE_THRESHOLD) {
         dynamicSafetyStockDays *= SELL_THROUGH_SAFETY_STOCK.HIGH_RATE_MULTIPLIER;
+    // Fix: Corrected typo from `SELL_THROUGH_SAFETY_stock` to `SELL_THROUGH_SAFETY_STOCK`.
     } else if (item.sellThroughRate < SELL_THROUGH_SAFETY_STOCK.LOW_RATE_THRESHOLD) {
         dynamicSafetyStockDays *= SELL_THROUGH_SAFETY_STOCK.LOW_RATE_MULTIPLIER;
     }
@@ -154,9 +155,13 @@ export const useFilteredData = (): ProductData[] => {
                     if (bVal === undefined || bVal === null) return -1;
 
                     let comparison = 0;
-                    if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    if (typeof aVal === 'number' && typeof bVal === 'number') {
+                        if (aVal < bVal) comparison = -1;
+                        if (aVal > bVal) comparison = 1;
+                    } else if (typeof aVal === 'string' && typeof bVal === 'string') {
                         comparison = aVal.localeCompare(bVal);
                     } else {
+                        // Fallback for mixed or other types
                         if (aVal < bVal) comparison = -1;
                         if (aVal > bVal) comparison = 1;
                     }

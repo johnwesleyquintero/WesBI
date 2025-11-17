@@ -32,12 +32,6 @@ const SettingsModal: React.FC = () => {
     const [localApiKey, setLocalApiKey] = React.useState(apiKey);
     const [localAiEnabled, setLocalAiEnabled] = React.useState(aiFeaturesEnabled);
 
-    // Sync local state if modal is reopened after global state changes
-    React.useEffect(() => {
-        setLocalApiKey(apiKey);
-        setLocalAiEnabled(aiFeaturesEnabled);
-    }, [apiKey, aiFeaturesEnabled]);
-
     const handleSave = () => {
         dispatch({ type: 'SAVE_SETTINGS', payload: { apiKey: localApiKey, aiFeaturesEnabled: localAiEnabled } });
     };

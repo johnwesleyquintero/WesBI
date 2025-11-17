@@ -173,12 +173,16 @@ const App: React.FC = () => {
 
                         {/* Real Charts */}
                         {activeSnapshot && !isComparisonMode && (
-                            <ErrorBoundary>
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
-                                    <AgeDistributionChart data={activeSnapshot.data} />
-                                    <RiskChart data={activeSnapshot.data} />
-                                    <PerformanceChart data={activeSnapshot.data} />
-                                </div>
+                             <ErrorBoundary>
+                                {rechartsReady ? (
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
+                                        <AgeDistributionChart data={activeSnapshot.data} />
+                                        <RiskChart data={activeSnapshot.data} />
+                                        <PerformanceChart data={activeSnapshot.data} />
+                                    </div>
+                                ) : (
+                                    <ChartsSkeleton />
+                                )}
                             </ErrorBoundary>
                         )}
 

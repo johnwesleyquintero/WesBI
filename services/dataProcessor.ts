@@ -1,16 +1,7 @@
 
 import type { ProductData, Stats, Snapshot } from '../types';
 import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR } from '../constants';
-
-/**
- * Safely parses a value into a number. Returns 0 if the value is not a valid number.
- * @param val The value to parse.
- * @returns A valid number.
- */
-const parseNumeric = (val: any): number => {
-    const num = Number(val);
-    return isNaN(num) ? 0 : num;
-};
+import { parseNumeric } from './utils';
 
 /**
  * Calculates a risk score for a product based on inventory age, sell-through,
