@@ -1,13 +1,13 @@
-import React, { createContext, useReducer, useContext, Dispatch, useEffect } from 'react';
+import * as React from 'react';
 import { appReducer, initialState, AppState, Action } from './appReducer';
 import { saveState, loadState } from '../services/statePersistence';
 
 interface AppContextType {
     state: AppState;
-    dispatch: Dispatch<Action>;
+    dispatch: React.Dispatch<Action>;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = React.createContext<AppContextType | undefined>(undefined);
 
 // --- State Initialization with Persistence ---
 // 1. Attempt to load the user's saved settings from localStorage.
@@ -19,14 +19,14 @@ const effectiveInitialState = { ...initialState, ...persistedState };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Initialize the app's state using the reducer and the effective initial state.
-    const [state, dispatch] = useReducer(appReducer, effectiveInitialState);
+    const [state, dispatch] = React.useReducer(appReducer, effectiveInitialState);
 
     // --- State Persistence Effect ---
     // This `useEffect` hook is the core of the persistence mechanism.
     // It automatically triggers the `saveState` function whenever the `state` object changes.
     // This ensures that any user setting modification (filters, sorting, etc.) is immediately
     // saved to localStorage for the next session.
-    useEffect(() => {
+    React.useEffect(() => {
         saveState(state);
     }, [state]);
 
@@ -42,7 +42,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
  * Includes a check to ensure it's used within an AppProvider.
  */
 export const useAppContext = () => {
-    const context = useContext(AppContext);
+    const context = React.useContext(AppContext);
     if (context === undefined) {
         throw new Error('useAppContext must be used within an AppProvider');
     }

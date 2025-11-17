@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import * as React from 'react';
 import type { ProductData } from '../types';
 import { AlertTriangleIcon, ClockIcon } from './Icons';
 
@@ -48,7 +48,7 @@ const AlertCard: React.FC<{ alert: Alert }> = ({ alert }) => {
 
 const AlertCenter: React.FC<AlertCenterProps> = ({ data, isComparisonMode }) => {
 
-    const alerts = useMemo((): Alert[] => {
+    const alerts = React.useMemo((): Alert[] => {
         const generatedAlerts: Alert[] = [];
         if (data.length === 0) return [];
 

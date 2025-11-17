@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
 import type { ProductData } from '../types';
 
 // Access Recharts from the global window object, as it's loaded from a CDN.
@@ -20,7 +20,7 @@ const ChartCard: React.FC<{ title: string; children: React.ReactNode }> = ({ tit
 );
 
 export const AgeDistributionChart: React.FC<ChartProps> = ({ data }) => {
-    const chartData = useMemo(() => {
+    const chartData = React.useMemo(() => {
         const distribution = [
             { name: '0-90 days', value: data.reduce((sum, item) => sum + item.invAge0to90, 0) },
             { name: '91-180 days', value: data.reduce((sum, item) => sum + item.invAge91to180, 0) },
@@ -60,7 +60,7 @@ export const AgeDistributionChart: React.FC<ChartProps> = ({ data }) => {
 };
 
 export const RiskChart: React.FC<ChartProps> = ({ data }) => {
-    const chartData = useMemo(() => {
+    const chartData = React.useMemo(() => {
         return data
             .filter(item => item.riskScore > 50)
             .sort((a, b) => b.riskScore - a.riskScore)
@@ -94,7 +94,7 @@ export const RiskChart: React.FC<ChartProps> = ({ data }) => {
 };
 
 export const PerformanceChart: React.FC<ChartProps> = ({ data }) => {
-    const chartData = useMemo(() => {
+    const chartData = React.useMemo(() => {
         return data
             .filter(item => item.sellThroughRate > 0)
             .sort((a, b) => b.sellThroughRate - a.sellThroughRate)

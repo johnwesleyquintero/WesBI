@@ -1,6 +1,6 @@
-import React from 'react';
+import * as React from 'react';
 import { useAppContext } from '../state/appContext';
-import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon, DollarIcon } from './Icons';
+import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon, DollarIcon, XIcon } from './Icons';
 
 const HelpSection: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <div className="border-t border-gray-200 pt-4 mt-4 first:mt-0 first:border-t-0 first:pt-0">
@@ -42,9 +42,7 @@ const HelpModal: React.FC = () => {
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                         aria-label="Close help modal"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <XIcon className="h-6 w-6" />
                     </button>
                 </div>
                 

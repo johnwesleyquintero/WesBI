@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
 import type { Toast as ToastType } from '../types';
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon, XIcon } from './Icons';
 
@@ -23,9 +23,9 @@ const TOAST_TIMEOUT = 5000; // 5 seconds
 
 const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => {
     const { id, type, title, message } = toast;
-    const [isExiting, setIsExiting] = useState(false);
+    const [isExiting, setIsExiting] = React.useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const timer = setTimeout(() => {
             setIsExiting(true);
             // Wait for exit animation to complete before removing from DOM

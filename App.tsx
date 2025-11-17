@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
+import * as React from 'react';
 import Header from './components/Header';
 import Controls from './components/Controls';
 import StatCard from './components/StatCard';
@@ -34,9 +34,9 @@ const App: React.FC = () => {
     const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
 
     // State to track if the Recharts script has been loaded.
-    const [rechartsReady, setRechartsReady] = useState(!!window.Recharts);
+    const [rechartsReady, setRechartsReady] = React.useState(!!window.Recharts);
 
-    useEffect(() => {
+    React.useEffect(() => {
         // If Recharts is not on the window object, load it dynamically.
         // This prevents race conditions between React (ESM) and Recharts (UMD).
         if (!window.Recharts) {
@@ -67,14 +67,14 @@ const App: React.FC = () => {
 
     const showSkeleton = loadingState.isLoading || !activeSnapshot;
 
-    const paginatedData = useMemo(() => {
+    const paginatedData = React.useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
         return filteredAndSortedData.slice(start, start + itemsPerPage);
     }, [filteredAndSortedData, currentPage, itemsPerPage]);
 
     const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
 
-    const comparisonInfo = useMemo(() => {
+    const comparisonInfo = React.useMemo(() => {
         if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
             const baseName = snapshots[comparisonSnapshotKeys.base]?.name ?? '...';
             const compareName = snapshots[comparisonSnapshotKeys.compare]?.name ?? '...';
@@ -83,7 +83,7 @@ const App: React.FC = () => {
         return 'Comparing snapshots.'; // Fallback
     }, [isComparisonMode, comparisonSnapshotKeys, snapshots]);
 
-    const displayedStats = useMemo(() => {
+    const displayedStats = React.useMemo(() => {
         const defaultChange = { totalProducts: 0, totalAvailable: 0, atRiskSKUs: 0, avgDaysInventory: 0, sellThroughRate: 0, totalPending: 0, totalInventoryValue: 0, capitalAtRisk: 0, totalPotentialRevenue: 0 };
         if (isComparisonMode && comparisonSnapshotKeys.base && comparisonSnapshotKeys.compare) {
              const oldSnap = snapshots[comparisonSnapshotKeys.base];

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { ArrowLeftIcon, ArrowRightIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 

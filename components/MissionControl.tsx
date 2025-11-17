@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 import { FlagIcon, CheckIcon, XIcon } from './Icons';
 import type { MissionTask } from '../types';
@@ -34,7 +34,7 @@ const MissionControl: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const { missions, activeMissionId } = state;
 
-    const activeMission = useMemo(() => {
+    const activeMission = React.useMemo(() => {
         if (!activeMissionId) return null;
         return missions.find(m => m.id === activeMissionId) || null;
     }, [missions, activeMissionId]);

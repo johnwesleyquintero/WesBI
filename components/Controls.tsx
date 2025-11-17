@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, DollarIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
@@ -25,7 +25,7 @@ interface UploadZoneProps {
 
 const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
     ({ title, description, onFileSelect, selectedFiles, onClear, multiple }, ref) => {
-        const [isDragOver, setIsDragOver] = useState(false);
+        const [isDragOver, setIsDragOver] = React.useState(false);
 
         const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
             e.preventDefault();
@@ -50,7 +50,7 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
             }
         };
         
-        const fileNames = useMemo(() => {
+        const fileNames = React.useMemo(() => {
             if (!selectedFiles) return null;
             if (selectedFiles instanceof File) return selectedFiles.name;
             if (selectedFiles.length > 0) {
@@ -82,7 +82,8 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
                     ref={ref} 
                     type="file" 
                     accept=".csv" 
-                    multiple={multiple} 
+                    multiple={multiple}
+                    onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
                     onChange={handleFileChange} 
                     className="hidden"
                 />
@@ -130,16 +131,16 @@ const Controls: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings, apiKey, aiFeaturesEnabled } = state;
 
-    const [searchInput, setSearchInput] = useState(filters.search);
-    const [snapshotFiles, setSnapshotFiles] = useState<FileList | null>(null);
-    const [financialFile, setFinancialFile] = useState<File | null>(null);
+    const [searchInput, setSearchInput] = React.useState(filters.search);
+    const [snapshotFiles, setSnapshotFiles] = React.useState<FileList | null>(null);
+    const [financialFile, setFinancialFile] = React.useState<File | null>(null);
 
-    const snapshotInputRef = useRef<HTMLInputElement>(null);
-    const financialInputRef = useRef<HTMLInputElement>(null);
+    const snapshotInputRef = React.useRef<HTMLInputElement>(null);
+    const financialInputRef = React.useRef<HTMLInputElement>(null);
     const filteredData = useFilteredData();
 
     // Debounce search input
-    useEffect(() => {
+    React.useEffect(() => {
         const timer = setTimeout(() => {
             if (searchInput !== filters.search) {
                 dispatch({ type: 'UPDATE_FILTER', payload: { key: 'search', value: searchInput } });
@@ -149,7 +150,7 @@ const Controls: React.FC = () => {
     }, [searchInput, filters.search, dispatch]);
 
     // Reset local search input when global filters are reset
-    useEffect(() => {
+    React.useEffect(() => {
         if (filters.search === '') {
             setSearchInput('');
         }
@@ -179,7 +180,7 @@ const Controls: React.FC = () => {
         }
     };
     
-    const handleExport = useCallback(() => {
+    const handleExport = React.useCallback(() => {
         if (filteredData.length === 0) {
             dispatch({ type: 'ADD_TOAST', payload: {
                 type: 'info',
@@ -210,13 +211,13 @@ const Controls: React.FC = () => {
         dispatch({ type: 'OPEN_STRATEGY_MODAL' });
     };
 
-    const activeFilterCount = useMemo(() => {
+    const activeFilterCount = React.useMemo(() => {
         return Object.values(filters).filter(Boolean).length;
     }, [filters]);
 
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
-    const uniqueCategories = useMemo(() => {
+    const uniqueCategories = React.useMemo(() => {
         if (!activeSnapshot) return [];
         const categories = new Set(activeSnapshot.data.map(item => item.category));
         return Array.from(categories).filter(Boolean).sort();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 
 const ToggleSwitch: React.FC<{
@@ -29,11 +29,11 @@ const SettingsModal: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const { apiKey, aiFeaturesEnabled } = state;
 
-    const [localApiKey, setLocalApiKey] = useState(apiKey);
-    const [localAiEnabled, setLocalAiEnabled] = useState(aiFeaturesEnabled);
+    const [localApiKey, setLocalApiKey] = React.useState(apiKey);
+    const [localAiEnabled, setLocalAiEnabled] = React.useState(aiFeaturesEnabled);
 
     // Sync local state if modal is reopened after global state changes
-    useEffect(() => {
+    React.useEffect(() => {
         setLocalApiKey(apiKey);
         setLocalAiEnabled(aiFeaturesEnabled);
     }, [apiKey, aiFeaturesEnabled]);

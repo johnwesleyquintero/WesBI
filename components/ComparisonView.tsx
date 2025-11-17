@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { CompareIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 

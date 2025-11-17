@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from './Icons';
 
 interface StatCardProps {

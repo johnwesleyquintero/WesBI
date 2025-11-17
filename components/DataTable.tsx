@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import * as React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
@@ -26,7 +26,7 @@ const SortableHeader: React.FC<{
     className?: string;
 }> = ({ columnKey, title, sortConfig, onSort, className = '' }) => {
     
-    const sortInfo = useMemo(() => {
+    const sortInfo = React.useMemo(() => {
         const index = sortConfig.findIndex(s => s.key === columnKey);
         if (index === -1) return null;
         return {
@@ -157,7 +157,7 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
         dispatch({ type: 'UPDATE_SORT', payload: { key, shiftKey } });
     };
 
-    const headers = useMemo(() => {
+    const headers = React.useMemo(() => {
         const baseHeaders: { key: keyof ProductData; title: string; isNumeric?: boolean }[] = [
             { key: 'sku', title: 'SKU' },
             { key: 'asin', title: 'ASIN' },

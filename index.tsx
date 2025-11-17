@@ -1,21 +1,26 @@
 
-import React from 'react';
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import * as ReactDOM from 'react-dom';
 import App from './App';
 import { AppProvider } from './state/appContext';
 
-// Expose React and ReactDOM to the global scope so UMD libraries like Recharts can find them.
-// This is a common requirement when mixing ESM modules with older script formats.
-(window as any).React = React;
+// Production Fix: UMD libraries like Recharts, loaded via CDN, expect `React` to be a global
+// object. However, the `React` object imported from an ES module is frozen (not extensible).
+// Older libraries that try to attach properties to it (like the legacy `PropTypes`) will
+// cause a "Cannot add property" TypeError.
+//
+// To solve this, we create a new, extensible object that spreads all properties from the
+// imported `React` module. We then attach `PropTypes` to this copy and expose the result
+// globally as `window.React`.
+const extensibleReact = { ...React };
+if ((window as any).PropTypes) {
+  (extensibleReact as any).PropTypes = (window as any).PropTypes;
+}
+
+(window as any).React = extensibleReact;
 (window as any).ReactDOM = ReactDOM;
 
-// Production Fix: Some UMD libraries like Recharts still rely on the legacy `PropTypes`
-// library being attached to the React object. Since `prop-types` is now a separate package
-// (loaded via CDN in index.html), we manually attach it here to prevent runtime errors.
-if ((window as any).PropTypes) {
-  (window as any).React.PropTypes = (window as any).PropTypes;
-}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

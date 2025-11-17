@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { LightbulbIcon } from './Icons';
 
 interface InsightsPanelProps {

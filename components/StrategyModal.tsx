@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 import { getStrategyFromGemini } from '../services/geminiService';
 import { createMission } from '../services/missionService';
@@ -26,10 +26,10 @@ const StrategyModal: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const { snapshots, activeSnapshotKey, apiKey, activeMissionId } = state;
 
-    const [goal, setGoal] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [plan, setPlan] = useState<string>('');
-    const [error, setError] = useState<string>('');
+    const [goal, setGoal] = React.useState<string>('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [plan, setPlan] = React.useState<string>('');
+    const [error, setError] = React.useState<string>('');
 
     const handleClose = () => {
         dispatch({ type: 'CLOSE_STRATEGY_MODAL' });
@@ -68,7 +68,7 @@ const StrategyModal: React.FC = () => {
         }});
     };
 
-    const parsedPlanHtml = useMemo(() => {
+    const parsedPlanHtml = React.useMemo(() => {
         if (!plan) return '';
         if (window.marked) {
             return window.marked.parse(plan);

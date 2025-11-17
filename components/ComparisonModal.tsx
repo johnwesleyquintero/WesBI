@@ -1,14 +1,14 @@
 
-import React, { useState, useMemo } from 'react';
+import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 
 const ComparisonModal: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const { snapshots } = state;
-    const [baseKey, setBaseKey] = useState<string>('');
-    const [compareKey, setCompareKey] = useState<string>('');
+    const [baseKey, setBaseKey] = React.useState<string>('');
+    const [compareKey, setCompareKey] = React.useState<string>('');
 
-    const snapshotOptions = useMemo(() => {
+    const snapshotOptions = React.useMemo(() => {
         return Object.keys(snapshots).sort();
     }, [snapshots]);
 
