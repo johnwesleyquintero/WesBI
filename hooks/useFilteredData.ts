@@ -1,4 +1,5 @@
 
+
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -81,7 +82,16 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
     const idealInventoryLevel = demandDuringLeadTime + requiredSafetyStock;
     
     // The recommendation should cover the gap to reach the ideal inventory level.
-    const recommendation = idealInventoryLevel - item.available;
+    let recommendation = idealInventoryLevel - item.available;
+
+    // --- Restock Urgency Multiplier ---
+    // Prioritize replenishing low-value, slow-moving items that might be operationally important
+    // but are not captured by velocity or high-value metrics alone. This prevents stockouts on
+    // potentially critical but less glamorous inventory.
+    if ((item.inventoryValue ?? 0) < 500 && item.sellThroughRate < 25) {
+        const urgencyMultiplier = 1.5;
+        recommendation *= urgencyMultiplier;
+    }
 
     // Only recommend restocking if there's a need, and round to standard shipment quantities.
     return roundToShipmentQuantity(recommendation);
