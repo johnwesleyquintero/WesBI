@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { AlertTriangleIcon } from './Icons';
 
@@ -28,6 +29,14 @@ class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
   };
+
+  // Fix: Explicitly define props to satisfy TypeScript compiler when using namespace import pattern
+  public props: Readonly<Props>;
+
+  constructor(props: Props) {
+      super(props);
+      this.props = props;
+  }
 
   public static getDerivedStateFromError(_: Error): State {
     // Update state so the next render will show the fallback UI.

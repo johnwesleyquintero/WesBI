@@ -2,6 +2,9 @@
 
 
 
+
+
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -45,8 +48,29 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
             e.preventDefault();
             setIsDragOver(false);
             const files = e.dataTransfer.files;
+            
+            // Validate files - filter only for CSVs
             if (files && files.length > 0) {
-                onFileSelect(multiple ? files : files[0]);
+                const dataTransfer = new DataTransfer();
+                let hasInvalidFile = false;
+                
+                // Fix: Explicitly cast to File[] to avoid 'unknown' type errors during iteration
+                (Array.from(files) as File[]).forEach(file => {
+                    if (file.name.toLowerCase().endsWith('.csv')) {
+                        dataTransfer.items.add(file);
+                    } else {
+                        hasInvalidFile = true;
+                    }
+                });
+                
+                if (dataTransfer.files.length > 0) {
+                    onFileSelect(multiple ? dataTransfer.files : dataTransfer.files[0]);
+                    if (hasInvalidFile) {
+                        // Optional: You could trigger a toast here if you passed dispatch down, 
+                        // but for now we just silently accept the valid ones.
+                        console.warn("Skipped non-CSV files.");
+                    }
+                }
             }
         };
         const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +91,8 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
             if (!selectedFiles) return null;
             if (selectedFiles instanceof File) return selectedFiles.name;
             if (selectedFiles.length > 0) {
-                const names = Array.from(selectedFiles).map(f => f.name);
+                // Fix: Explicitly cast to File[] to ensure 'name' property access is valid
+                const names = (Array.from(selectedFiles) as File[]).map(f => f.name);
                 if (names.length > 2) {
                     return `${names.slice(0, 2).join(', ')}, and ${names.length - 2} more`;
                 }
@@ -187,7 +212,8 @@ const Controls: React.FC = () => {
     const handleProcessFiles = async () => {
         if (snapshotFiles && snapshotFiles.length > 0) {
             // --- Pre-flight Check for Large Files ---
-            const totalSize = Array.from(snapshotFiles).reduce((sum, file) => sum + file.size, 0);
+            // Fix: Explicitly cast to File[] to ensure 'size' property access is valid and totalSize is a number
+            const totalSize = (Array.from(snapshotFiles) as File[]).reduce((sum, file) => sum + file.size, 0);
             const maxSizeInBytes = FILE_PROCESSING_THRESHOLDS.MAX_FILE_SIZE_MB * 1024 * 1024;
 
             if (totalSize > maxSizeInBytes) {

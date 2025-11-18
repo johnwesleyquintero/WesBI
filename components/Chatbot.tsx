@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { useAppContext } from '../state/appContext';
@@ -52,6 +53,16 @@ const Chatbot: React.FC = () => {
     const [input, setInput] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
+    
+    // Track mounting state to prevent updates after unmount
+    const isMounted = React.useRef(true);
+
+    React.useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     React.useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,7 +92,9 @@ const Chatbot: React.FC = () => {
             setMessages([{ role: 'model', content: `Hello! I'm WesBI, your FBA operations analyst. I'm ready to answer questions about your '${snapshots[activeSnapshotKey].name}' snapshot.` }]);
         } catch (error) {
             console.error("Failed to initialize Gemini Chat:", error);
-            setMessages([{ role: 'model', content: "There was an error initializing the AI chat. Please check your API key and refresh." }]);
+            if (isMounted.current) {
+                setMessages([{ role: 'model', content: "There was an error initializing the AI chat. Please check your API key and refresh." }]);
+            }
         }
 
     }, [apiKey, activeSnapshotKey, snapshots]);
@@ -99,30 +112,42 @@ const Chatbot: React.FC = () => {
             const result = await chat.sendMessageStream({ message: userMessage.content });
 
             let currentResponse = '';
-            setMessages(prev => [...prev, { role: 'model', content: '' }]);
+            // Add a placeholder for the model response
+            if (isMounted.current) {
+                setMessages(prev => [...prev, { role: 'model', content: '' }]);
+            }
 
             for await (const chunk of result) {
+                if (!isMounted.current) break; // Stop processing if unmounted
+
                 currentResponse += chunk.text;
                 setMessages(prev => {
                     const newMessages = [...prev];
-                    newMessages[newMessages.length - 1].content = currentResponse;
+                    // Update the last message (the model placeholder)
+                    if (newMessages.length > 0) {
+                        newMessages[newMessages.length - 1].content = currentResponse;
+                    }
                     return newMessages;
                 });
             }
         } catch (error) {
             console.error("Gemini chat error:", error);
             const errorMessage = "Sorry, I encountered an error. It might be due to an invalid API key, network issues, or a problem with the AI service. Please try again later.";
-            setMessages(prev => {
-                const newMessages = [...prev];
-                // If the last message is an empty model message, update it. Otherwise, add a new one.
-                if(newMessages[newMessages.length - 1].role === 'model' && newMessages[newMessages.length - 1].content === ''){
-                     newMessages[newMessages.length - 1].content = errorMessage;
-                     return newMessages;
-                }
-                return [...newMessages, { role: 'model', content: errorMessage }];
-            });
+            if (isMounted.current) {
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    // If the last message is an empty model message, update it. Otherwise, add a new one.
+                    if(newMessages.length > 0 && newMessages[newMessages.length - 1].role === 'model' && newMessages[newMessages.length - 1].content === ''){
+                         newMessages[newMessages.length - 1].content = errorMessage;
+                         return newMessages;
+                    }
+                    return [...newMessages, { role: 'model', content: errorMessage }];
+                });
+            }
         } finally {
-            setIsLoading(false);
+            if (isMounted.current) {
+                setIsLoading(false);
+            }
         }
     };
 
