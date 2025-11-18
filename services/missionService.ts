@@ -19,8 +19,10 @@ export const parseTasksFromMarkdown = (markdown: string): MissionTask[] => {
     const listItems = tempDiv.querySelectorAll('li');
 
     listItems.forEach((li, index) => {
+        // Generate a unique ID using timestamp, index, and a random suffix to prevent collisions
+        const uniqueSuffix = Math.random().toString(36).substring(2, 9);
         tasks.push({
-            id: `task-${Date.now()}-${index}`,
+            id: `task-${Date.now()}-${index}-${uniqueSuffix}`,
             text: li.textContent || 'Unnamed task',
             completed: false,
         });

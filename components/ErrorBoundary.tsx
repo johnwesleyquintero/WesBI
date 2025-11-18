@@ -3,7 +3,7 @@ import * as React from 'react';
 import { AlertTriangleIcon } from './Icons';
 
 interface Props {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
@@ -30,12 +30,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     hasError: false,
   };
 
-  // Fix: Explicitly define props to satisfy TypeScript compiler when using namespace import pattern
-  public props: Readonly<Props>;
-
   constructor(props: Props) {
       super(props);
-      this.props = props;
   }
 
   public static getDerivedStateFromError(_: Error): State {

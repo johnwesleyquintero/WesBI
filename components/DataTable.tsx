@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon } from './Icons';
@@ -46,7 +47,8 @@ const SortableHeader: React.FC<{
     );
 };
 
-const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> = ({ item, isComparisonMode }) => {
+// Use React.memo to prevent unnecessary re-renders of rows when sorting changes but data remains the same.
+const DataTableRow = React.memo(({ item, isComparisonMode }: { item: ProductData; isComparisonMode: boolean }) => {
     const getRowClass = () => {
         if (isComparisonMode) {
             if ((item.inventoryChange ?? 0) > 0) return 'bg-green-100/50';
@@ -135,7 +137,9 @@ const DataTableRow: React.FC<{ item: ProductData; isComparisonMode: boolean }> =
             </td>
         </tr>
     );
-};
+});
+// Display name for debugging
+DataTableRow.displayName = 'DataTableRow';
 
 
 const DataTable: React.FC<DataTableProps> = ({ data }) => {
