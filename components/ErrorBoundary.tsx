@@ -30,8 +30,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     hasError: false,
   };
 
+  // Explicitly declare props to satisfy TypeScript if base class inference fails
+  public props: Props;
+
   constructor(props: Props) {
       super(props);
+      this.props = props;
   }
 
   public static getDerivedStateFromError(_: Error): State {

@@ -5,6 +5,7 @@
 
 
 
+
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -56,7 +57,7 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
                 
                 // Fix: Explicitly cast to File[] to avoid 'unknown' type errors during iteration
                 (Array.from(files) as File[]).forEach(file => {
-                    if (file.name.toLowerCase().endsWith('.csv')) {
+                    if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
                         dataTransfer.items.add(file);
                     } else {
                         hasInvalidFile = true;
@@ -68,7 +69,7 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
                     if (hasInvalidFile) {
                         // Optional: You could trigger a toast here if you passed dispatch down, 
                         // but for now we just silently accept the valid ones.
-                        console.warn("Skipped non-CSV files.");
+                        console.warn("Skipped non-CSV/TXT files.");
                     }
                 }
             }
@@ -123,7 +124,7 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
                 <input 
                     ref={ref} 
                     type="file" 
-                    accept=".csv" 
+                    accept=".csv,.txt" 
                     multiple={multiple}
                     onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
                     onChange={handleFileChange} 
@@ -291,8 +292,8 @@ const Controls: React.FC = () => {
                  <div className="lg:col-span-1">
                      <UploadZone
                         ref={snapshotInputRef}
-                        title="FBA Snapshots"
-                        description="Drop file(s) here or click"
+                        title="Data Upload"
+                        description="Drop FBA Snapshots & Manage FBA Inventory files here"
                         onFileSelect={(files) => setSnapshotFiles(files as FileList)}
                         selectedFiles={snapshotFiles}
                         onClear={() => { 

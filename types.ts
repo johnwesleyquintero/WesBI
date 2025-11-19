@@ -20,6 +20,18 @@ export interface ProductData {
   category: string;
   restockRecommendation?: number; // calculated field
 
+  // --- MFI Integration Fields ---
+  inboundWorking?: number;
+  inboundShipped?: number;
+  inboundReceiving?: number;
+  reservedQuantity?: number;
+  
+  // --- Logistics & Urgency Metrics ---
+  netAvailableStock?: number; // (Fulfillable + Inbound) - Reserved
+  daysOfCover?: number; // Net Stock / Daily Sales
+  urgencyScore?: number; // (SellThrough * DailySales) - Net Stock
+  urgencyStatus?: 'Critical' | 'Warning' | 'Healthy';
+
   // For comparison
   inventoryChange?: number;
   shippedChange?: number;

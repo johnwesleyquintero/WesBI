@@ -1,7 +1,7 @@
 
 
 import type { ProductData, Stats, Snapshot } from '../types';
-import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR } from '../constants';
+import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR, URGENCY_CONFIG } from '../constants';
 import { parseNumeric } from './utils';
 
 /**
@@ -64,12 +64,45 @@ export const calculateRiskScore = (item: Omit<ProductData, 'riskScore'>): number
     return Math.min(Math.round(score), MAX_SCORE);
 };
 
+export interface MfiData {
+    sku: string;
+    inboundWorking: number;
+    inboundShipped: number;
+    inboundReceiving: number;
+    reservedQuantity: number;
+    mfnFulfillable?: number;
+}
+
+/**
+ * Processes the MFI (Manage FBA Inventory) report into a lookup map.
+ */
+export const processMfiData = (rawData: any[]): Map<string, MfiData> => {
+    const map = new Map<string, MfiData>();
+    
+    rawData.forEach(row => {
+        const sku = (row['sku'] || '').trim();
+        if (!sku) return;
+
+        map.set(sku, {
+            sku,
+            inboundWorking: parseNumeric(row['afn-inbound-working-quantity']),
+            inboundShipped: parseNumeric(row['afn-inbound-shipped-quantity']),
+            inboundReceiving: parseNumeric(row['afn-inbound-receiving-quantity']),
+            reservedQuantity: parseNumeric(row['afn-reserved-quantity']),
+            mfnFulfillable: parseNumeric(row['mfn-fulfillable-quantity']),
+        });
+    });
+    return map;
+};
+
 /**
  * Transforms raw data objects from a CSV into structured ProductData, calculating derived fields.
+ * Enriched by optional MFI data if available.
  * @param {any[]} rawData - Array of row objects from PapaParse.
+ * @param {Map<string, MfiData>} [mfiMap] - Optional map of MFI logistics data.
  * @returns {ProductData[]} Array of processed ProductData objects.
  */
-export const processRawData = (rawData: any[]): ProductData[] => {
+export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): ProductData[] => {
     const mappedData = rawData.map((row): ProductData | null => {
         const sku = (row['sku'] || '').trim();
         if (!sku) {
@@ -94,6 +127,54 @@ export const processRawData = (rawData: any[]): ProductData[] => {
             (invAge365plus * INVENTORY_AGE_WEIGHTS.DAYS_365_PLUS) 
         ) / totalInv : 0;
         
+        const sellThroughRate = available + shippedT30 > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0;
+        const dailySales = shippedT30 / 30;
+
+        // --- MFI Enrichment & Logistics Calculation ---
+        let mfiFields = {};
+        let urgencyFields = {};
+
+        if (mfiMap && mfiMap.has(sku)) {
+            const mfi = mfiMap.get(sku)!;
+            
+            // 1. Calculate Net Available Stock
+            // Formula: afn-fulfillable + afn-inbound-working + afn-inbound-shipped – afn-reserved-quantity
+            // Note: 'available' from snapshot is roughly equivalent to 'afn-fulfillable'
+            const netAvailableStock = (available + mfi.inboundWorking + mfi.inboundShipped) - mfi.reservedQuantity;
+            
+            // 2. Calculate Stock Coverage Days
+            // Formula: (Net Available Stock / Avg Daily Sales)
+            const daysOfCover = dailySales > 0 ? netAvailableStock / dailySales : (netAvailableStock > 0 ? 999 : 0);
+
+            // 3. Calculate Urgency Score
+            // Formula: (Sell-Through % x Forecasted Daily Sales) – Net Available Stock
+            // Note: SellThrough is 0-100, converted to decimal 0-1.
+            const urgencyScore = ((sellThroughRate / 100) * dailySales) - netAvailableStock;
+
+            // 4. Determine Status
+            let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' = 'Healthy';
+            if (daysOfCover <= URGENCY_CONFIG.COVERAGE_CRITICAL_DAYS || urgencyScore > URGENCY_CONFIG.URGENCY_SCORE_THRESHOLD) {
+                urgencyStatus = 'Critical';
+            } else if (daysOfCover <= URGENCY_CONFIG.COVERAGE_WARNING_DAYS) {
+                urgencyStatus = 'Warning';
+            }
+
+            mfiFields = {
+                inboundWorking: mfi.inboundWorking,
+                inboundShipped: mfi.inboundShipped,
+                inboundReceiving: mfi.inboundReceiving,
+                reservedQuantity: mfi.reservedQuantity,
+            };
+
+            urgencyFields = {
+                netAvailableStock,
+                daysOfCover: daysOfCover === 999 ? 999 : Math.round(daysOfCover),
+                urgencyScore: parseFloat(urgencyScore.toFixed(2)),
+                urgencyStatus
+            };
+        }
+
+
         const partialData: Omit<ProductData, 'riskScore'> = {
             sku: sku,
             asin: row['asin'] || '',
@@ -108,9 +189,11 @@ export const processRawData = (rawData: any[]): ProductData[] => {
             invAge365plus,
             totalInvAgeDays: Math.round(avgAge),
             shippedT30: shippedT30,
-            sellThroughRate: available + shippedT30 > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0,
+            sellThroughRate,
             recommendedAction: row['recommended-action'] || 'No Action',
             category: row['category'] || 'Unknown',
+            ...mfiFields,
+            ...urgencyFields,
         };
 
         const riskScore = calculateRiskScore(partialData);

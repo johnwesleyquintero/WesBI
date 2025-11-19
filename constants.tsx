@@ -52,6 +52,13 @@ export const VELOCITY_TREND_INDICATOR = {
     NEW_ITEM: 999,
 };
 
+// --- Logistics & Urgency ---
+export const URGENCY_CONFIG = {
+    COVERAGE_CRITICAL_DAYS: 3,
+    COVERAGE_WARNING_DAYS: 7,
+    URGENCY_SCORE_THRESHOLD: 0, // Positive score implies urgency
+};
+
 // --- Restock Forecasting ---
 export const FORECAST_CONFIG = {
     SHIPMENT_QUANTITY_TIERS: [30, 50, 100, 150, 200, 250, 300, 400, 500],
