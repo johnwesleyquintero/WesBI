@@ -54,8 +54,8 @@ export const VELOCITY_TREND_INDICATOR = {
 
 // --- Logistics & Urgency ---
 export const URGENCY_CONFIG = {
-    COVERAGE_CRITICAL_DAYS: 3,
-    COVERAGE_WARNING_DAYS: 7,
+    COVERAGE_CRITICAL_DAYS: 2,
+    COVERAGE_WARNING_DAYS: 5,
     URGENCY_SCORE_THRESHOLD: 0, // Positive score implies urgency
 };
 

@@ -153,6 +153,7 @@ export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): P
 
             // 4. Determine Status
             let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' = 'Healthy';
+            
             if (daysOfCover <= URGENCY_CONFIG.COVERAGE_CRITICAL_DAYS || urgencyScore > URGENCY_CONFIG.URGENCY_SCORE_THRESHOLD) {
                 urgencyStatus = 'Critical';
             } else if (daysOfCover <= URGENCY_CONFIG.COVERAGE_WARNING_DAYS) {

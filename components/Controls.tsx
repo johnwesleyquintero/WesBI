@@ -1,11 +1,5 @@
 
 
-
-
-
-
-
-
 import * as React from 'react';
 import type { Filters, ForecastSettings } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
@@ -293,7 +287,7 @@ const Controls: React.FC = () => {
                      <UploadZone
                         ref={snapshotInputRef}
                         title="Data Upload"
-                        description="Drop FBA Snapshots & Manage FBA Inventory files here"
+                        description="Drop FBA Snapshots & Manage FBA Inventory files"
                         onFileSelect={(files) => setSnapshotFiles(files as FileList)}
                         selectedFiles={snapshotFiles}
                         onClear={() => { 

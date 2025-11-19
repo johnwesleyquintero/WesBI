@@ -176,6 +176,12 @@ const DataTableRow = React.memo(({ item, isComparisonMode }: { item: ProductData
                 </td>
             )}
             <td className="text-right font-mono">{item.sellThroughRate}%</td>
+            
+            {/* Restock Rec Column */}
+             <td className={`text-right font-mono ${getRestockCellClass(item.restockRecommendation)}`}>
+                {item.restockRecommendation && item.restockRecommendation > 0 ? item.restockRecommendation.toLocaleString() : '-'}
+            </td>
+
             <td>
                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(item.recommendedAction)}`}>
                     {item.recommendedAction}
@@ -215,6 +221,10 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
             
             { key: 'shippedT30', title: 'Shipped T30', isNumeric: true },
             { key: 'sellThroughRate', title: 'Sell-Through', isNumeric: true },
+            
+            // Restock Rec Column
+            { key: 'restockRecommendation', title: 'Restock Rec.', isNumeric: true, tooltip: "Suggested Restock Quantity" },
+
             { key: 'recommendedAction', title: 'Action' },
             { key: 'riskScore', title: 'Risk', isNumeric: true },
         ];

@@ -23,16 +23,10 @@ export const processFiles = async (
 
     try {
         // 1. Separate files into "MFI" (Supplemental) and "Snapshot" (Primary)
-        const snapshotFiles: File[] = [];
-        const mfiFiles: File[] = [];
-
-        // Since we need to read headers to distinguish, we'll do a quick pre-scan
-        // However, for performance, we can often guess by filename or just parse all and check headers.
         // Strategy: Parse ALL files. Check headers of results. 
         // If header has 'afn-inbound-working-quantity', it's MFI.
         // If header has 'inv-age-0-to-90-days', it's Snapshot.
         
-        // We need to process MFI files FIRST to build the map.
         const allParsedData: { fileName: string, data: any[], isMfi: boolean }[] = [];
 
         let progress = 0;
