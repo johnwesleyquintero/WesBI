@@ -73,7 +73,13 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
             }
         });
         
-        const jsonResponse = JSON.parse(response.text);
+        // Sanitize response: remove potential markdown code blocks (```json ... ```)
+        let cleanText = response.text;
+        if (cleanText) {
+             cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim();
+        }
+
+        const jsonResponse = JSON.parse(cleanText);
         return jsonResponse.insights || [];
 
     } catch (error) {

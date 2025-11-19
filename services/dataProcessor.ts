@@ -80,7 +80,8 @@ export const processMfiData = (rawData: any[]): Map<string, MfiData> => {
     const map = new Map<string, MfiData>();
     
     rawData.forEach(row => {
-        const sku = (row['sku'] || '').trim();
+        // Normalize SKU: Trim whitespace and convert to uppercase for consistent matching
+        const sku = (row['sku'] || '').trim().toUpperCase();
         if (!sku) return;
 
         map.set(sku, {
@@ -104,7 +105,8 @@ export const processMfiData = (rawData: any[]): Map<string, MfiData> => {
  */
 export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): ProductData[] => {
     const mappedData = rawData.map((row): ProductData | null => {
-        const sku = (row['sku'] || '').trim();
+        // Normalize SKU: Trim whitespace and convert to uppercase for consistent matching
+        const sku = (row['sku'] || '').trim().toUpperCase();
         if (!sku) {
             return null; // This row is invalid, mark for removal
         }
