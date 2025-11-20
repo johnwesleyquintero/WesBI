@@ -88,8 +88,10 @@ const Chatbot: React.FC = () => {
                 config: { systemInstruction }
             });
 
-            setChat(newChat);
-            setMessages([{ role: 'model', content: `Hello! I'm WesBI, your FBA operations analyst. I'm ready to answer questions about your '${snapshots[activeSnapshotKey].name}' snapshot.` }]);
+            if (isMounted.current) {
+                setChat(newChat);
+                setMessages([{ role: 'model', content: `Hello! I'm WesBI, your FBA operations analyst. I'm ready to answer questions about your '${snapshots[activeSnapshotKey].name}' snapshot.` }]);
+            }
         } catch (error) {
             console.error("Failed to initialize Gemini Chat:", error);
             if (isMounted.current) {

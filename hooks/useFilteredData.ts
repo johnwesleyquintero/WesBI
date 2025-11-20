@@ -2,6 +2,7 @@
 
 
 
+
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
