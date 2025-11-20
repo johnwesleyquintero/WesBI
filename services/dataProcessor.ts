@@ -133,48 +133,47 @@ export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): P
         const dailySales = shippedT30 / 30;
 
         // --- MFI Enrichment & Logistics Calculation ---
-        let mfiFields = {};
-        let urgencyFields = {};
+        // Initialize with default undefined or 0
+        let inboundWorking: number | undefined = undefined;
+        let inboundShipped: number | undefined = undefined;
+        let inboundReceiving: number | undefined = undefined;
+        let reservedQuantity: number | undefined = undefined;
+        
+        let netAvailableStock: number | undefined = undefined;
+        let daysOfCover: number | undefined = undefined;
+        let urgencyScore: number | undefined = undefined;
+        let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' | undefined = undefined;
 
         if (mfiMap && mfiMap.has(sku)) {
             const mfi = mfiMap.get(sku)!;
             
+            inboundWorking = mfi.inboundWorking;
+            inboundShipped = mfi.inboundShipped;
+            inboundReceiving = mfi.inboundReceiving;
+            reservedQuantity = mfi.reservedQuantity;
+
             // 1. Calculate Net Available Stock
             // Formula: afn-fulfillable + afn-inbound-working + afn-inbound-shipped – afn-reserved-quantity
-            // Note: 'available' from snapshot is roughly equivalent to 'afn-fulfillable'
-            const netAvailableStock = (available + mfi.inboundWorking + mfi.inboundShipped) - mfi.reservedQuantity;
+            netAvailableStock = (available + mfi.inboundWorking + mfi.inboundShipped) - mfi.reservedQuantity;
             
             // 2. Calculate Stock Coverage Days
             // Formula: (Net Available Stock / Avg Daily Sales)
-            const daysOfCover = dailySales > 0 ? netAvailableStock / dailySales : (netAvailableStock > 0 ? 999 : 0);
+            daysOfCover = dailySales > 0 ? netAvailableStock / dailySales : (netAvailableStock > 0 ? 999 : 0);
+            // Round immediately for display logic consistency
+            daysOfCover = daysOfCover === 999 ? 999 : Math.round(daysOfCover);
 
             // 3. Calculate Urgency Score
             // Formula: (Sell-Through % x Forecasted Daily Sales) – Net Available Stock
-            // Note: SellThrough is 0-100, converted to decimal 0-1.
-            const urgencyScore = ((sellThroughRate / 100) * dailySales) - netAvailableStock;
+            const rawUrgencyScore = ((sellThroughRate / 100) * dailySales) - netAvailableStock;
+            urgencyScore = parseFloat(rawUrgencyScore.toFixed(2));
 
             // 4. Determine Status
-            let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' = 'Healthy';
-            
-            if (daysOfCover <= URGENCY_CONFIG.COVERAGE_CRITICAL_DAYS || urgencyScore > URGENCY_CONFIG.URGENCY_SCORE_THRESHOLD) {
+            urgencyStatus = 'Healthy';
+            if (daysOfCover <= URGENCY_CONFIG.COVERAGE_CRITICAL_DAYS || rawUrgencyScore > URGENCY_CONFIG.URGENCY_SCORE_THRESHOLD) {
                 urgencyStatus = 'Critical';
             } else if (daysOfCover <= URGENCY_CONFIG.COVERAGE_WARNING_DAYS) {
                 urgencyStatus = 'Warning';
             }
-
-            mfiFields = {
-                inboundWorking: mfi.inboundWorking,
-                inboundShipped: mfi.inboundShipped,
-                inboundReceiving: mfi.inboundReceiving,
-                reservedQuantity: mfi.reservedQuantity,
-            };
-
-            urgencyFields = {
-                netAvailableStock,
-                daysOfCover: daysOfCover === 999 ? 999 : Math.round(daysOfCover),
-                urgencyScore: parseFloat(urgencyScore.toFixed(2)),
-                urgencyStatus
-            };
         }
 
 
@@ -195,12 +194,22 @@ export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): P
             sellThroughRate,
             recommendedAction: row['recommended-action'] || 'No Action',
             category: row['category'] || 'Unknown',
-            ...mfiFields,
-            ...urgencyFields,
+            // MFI Fields - explicitly assigned instead of spread for performance
+            inboundWorking,
+            inboundShipped,
+            inboundReceiving,
+            reservedQuantity,
+            // Urgency Fields
+            netAvailableStock,
+            daysOfCover,
+            urgencyScore,
+            urgencyStatus
         };
 
         const riskScore = calculateRiskScore(partialData);
-        return { ...partialData, riskScore };
+        // Return the full object directly.
+        // We cast to ProductData because we know we've added the missing riskScore.
+        return { ...partialData, riskScore } as ProductData;
     });
 
     return mappedData.filter((item): item is ProductData => item !== null);

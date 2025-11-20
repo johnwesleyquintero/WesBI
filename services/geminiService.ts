@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ProductData } from '../types';
 
@@ -76,11 +77,13 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
         
         const rawText = response.text || '';
         
-        // Technical Debt Fix: Robust JSON extraction using Regex.
+        // Technical Debt Fix: Robust JSON extraction.
         // The model may sometimes wrap the JSON in Markdown code blocks (```json ... ```) or add conversational text.
-        // This approach specifically cleans code blocks and finds the first brace.
-        let cleanJson = rawText.replace(/```json\s*|\s*```/g, '').trim();
+        // We strip the markdown fences first.
+        let cleanJson = rawText.replace(/```json\s*|```/g, '').trim();
         
+        // Then we aggressively find the FIRST opening brace and LAST closing brace.
+        // This handles cases where the model says "Here is the data: { ... }"
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
 
@@ -95,7 +98,15 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
             console.error("Failed to parse JSON from Gemini response:", rawText);
             // Fallback: If JSON parsing fails, try to split by newlines if it looks like a list
             if (rawText.includes('- ')) {
-                 return rawText.split('\n').filter(line => line.trim().startsWith('-')).map(line => line.replace('-', '').trim());
+                 return rawText.split('\n')
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => {
+                        // Remove the dash
+                        let cleanLine = line.replace('-', '').trim();
+                        // Strip common Markdown bolding usually found in lists (e.g., "**Profit:** ...")
+                        cleanLine = cleanLine.replace(/\*\*/g, '');
+                        return cleanLine;
+                    });
             }
             return ["We received insights from AI, but couldn't format them correctly. Please try again."];
         }
