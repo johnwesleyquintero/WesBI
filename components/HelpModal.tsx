@@ -1,6 +1,4 @@
 
-
-
 import * as React from 'react';
 import { useAppContext } from '../state/appContext';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, LightbulbIcon, BarChartIcon, CogIcon, SparklesIcon, FlagIcon, XIcon } from './Icons';
@@ -51,7 +49,7 @@ const HelpModal: React.FC = () => {
                 <div className="p-6 overflow-y-auto">
                     <HelpSection title="Getting Started" icon={<RocketIcon />}>
                         <p>Drag and drop your FBA Snapshot <code>.csv</code> file(s) into the <strong>"FBA Snapshots"</strong> zone, or click it to browse. When your files are selected, click <strong>"Process Files"</strong> to start the analysis.</p>
-                        <p>The app will automatically parse all inventory and operational data from your snapshot.</p>
+                        <p>The app is compatible with standard CSVs and files exported directly from Excel (automatically handling special characters like Byte Order Marks).</p>
                     </HelpSection>
 
                     <HelpSection title="The Dashboard" icon={<BarChartIcon className="w-5 h-5" />}>

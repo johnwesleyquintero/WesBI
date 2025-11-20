@@ -1,3 +1,4 @@
+
 # WesBI - FBA Intelligence Cockpit
 
 An advanced FBA intelligence cockpit for real-time Amazon operations analytics. This tool empowers Amazon FBA sellers to transform raw inventory snapshot CSVs into a strategic command center. Analyze inventory health, sales performance, and potential risks with a powerful dashboard, and leverage AI-powered insights to make smarter, data-driven decisions that boost profitability.
@@ -12,8 +13,10 @@ An advanced FBA intelligence cockpit for real-time Amazon operations analytics. 
     *   **Automated Insights Panel:** As soon as you process a snapshot, the app automatically generates concise, actionable business insights, helping you spot opportunities and risks immediately.
     *   **AI Strategy Session & Mission Control:** Go beyond insights and generate a complete, step-by-step operational playbook. Select a high-level business goal (e.g., 'Liquidate High-Risk Inventory'), and the AI will create a detailed plan. You can then launch this plan as a trackable "Mission" with a live KPI chart and an interactive checklist right on your dashboard.
     *   **Context-Aware Chatbot:** Have a conversation with your data. The AI chatbot is primed with a summary of your active snapshot, allowing you to ask specific questions and get detailed answers in a natural, conversational way.
+    *   **Resilient JSON Handling:** The AI integration is hardened to handle conversational or malformed JSON responses, ensuring you get your insights even if the model is "chatty."
 
 *   **Deep Data Analysis & Comparison:**
+    *   **Enhanced CSV Processing:** Native support for CSV files exported from Excel, automatically handling Byte Order Marks (BOM) and encoding issues so your data loads perfectly every time.
     *   **Snapshot Comparison Mode:** Upload two different snapshot files to track trends over time. The dashboard and data table instantly switch to show per-SKU deltas for inventory levels, sales velocity, and risk scores.
     *   **Advanced Data Table:**
         *   **Powerful Filtering & Search:** Instantly search by SKU, ASIN, or Product Name. Drill down with filters for Inventory Age, Recommended Action, Stock Status (Low, High, Stranded), and more.
@@ -77,7 +80,7 @@ This project is built as a modern, self-contained single-page application, lever
 7.  **Compare Snapshots:**
     *   After loading at least two snapshots, click the **"Compare..."** button.
     *   Select your "Base" (older) and "Compare" (newer) snapshots.
-    *   The dashboard will now show the changes (deltas) between the two periods.
+    *   The dashboard will now show the changes (deltas) in your KPIs and in the data table for each SKU.
 
 8.  **Export Your View:**
     *   Click the **"Export"** button at any time to download the currently displayed data (with all filters and sorting applied) as a new CSV file.

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ProductData } from '../types';
 
@@ -73,14 +74,31 @@ export const getInsightsFromGemini = async (data: ProductData[], apiKey: string)
             }
         });
         
-        // Sanitize response: remove potential markdown code blocks (```json ... ```)
-        let cleanText = response.text;
-        if (cleanText) {
-             cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const rawText = response.text || '';
+        
+        // Technical Debt Fix: Robust JSON extraction using Regex.
+        // The model may sometimes wrap the JSON in Markdown code blocks (```json ... ```) or add conversational text.
+        // This approach specifically cleans code blocks and finds the first brace.
+        let cleanJson = rawText.replace(/```json\s*|\s*```/g, '').trim();
+        
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
         }
 
-        const jsonResponse = JSON.parse(cleanText);
-        return jsonResponse.insights || [];
+        try {
+            const jsonResponse = JSON.parse(cleanJson);
+            return jsonResponse.insights || [];
+        } catch (parseError) {
+            console.error("Failed to parse JSON from Gemini response:", rawText);
+            // Fallback: If JSON parsing fails, try to split by newlines if it looks like a list
+            if (rawText.includes('- ')) {
+                 return rawText.split('\n').filter(line => line.trim().startsWith('-')).map(line => line.replace('-', '').trim());
+            }
+            return ["We received insights from AI, but couldn't format them correctly. Please try again."];
+        }
 
     } catch (error) {
         console.error("Error fetching insights from Gemini:", error);

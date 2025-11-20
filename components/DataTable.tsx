@@ -1,5 +1,4 @@
 
-
 import * as React from 'react';
 import type { ProductData, SortConfig } from '../types';
 import { FileIcon, ChevronUpIcon, ChevronDownIcon, ClockIcon, AlertTriangleIcon, CheckCircleIcon } from './Icons';
@@ -10,14 +9,22 @@ interface DataTableProps {
     data: ProductData[];
 }
 
-const SortableHeader: React.FC<{
+// FIX: Memoize the SortableHeader to prevent re-rendering all headers when the data body changes.
+const SortableHeader = React.memo(({ 
+    columnKey, 
+    title, 
+    sortConfig, 
+    onSort, 
+    className = '', 
+    tooltip 
+}: {
     columnKey: keyof ProductData;
     title: string;
     sortConfig: SortConfig;
     onSort: (key: keyof ProductData, shiftKey: boolean) => void;
     className?: string;
     tooltip?: string;
-}> = ({ columnKey, title, sortConfig, onSort, className = '', tooltip }) => {
+}) => {
     
     const sortInfo = React.useMemo(() => {
         const index = sortConfig.findIndex(s => s.key === columnKey);
@@ -52,7 +59,8 @@ const SortableHeader: React.FC<{
             </span>
         </th>
     );
-};
+});
+SortableHeader.displayName = 'SortableHeader';
 
 // Use React.memo to prevent unnecessary re-renders of rows when sorting changes but data remains the same.
 const DataTableRow = React.memo(({ item, isComparisonMode }: { item: ProductData; isComparisonMode: boolean }) => {
@@ -202,9 +210,10 @@ const DataTable: React.FC<DataTableProps> = ({ data }) => {
     const { state, dispatch } = useAppContext();
     const { sortConfig, isComparisonMode } = state;
 
-    const onSort = (key: keyof ProductData, shiftKey: boolean) => {
+    // FIX: Wrap in useCallback to maintain function identity across renders, allowing SortableHeader to be memoized effectively.
+    const onSort = React.useCallback((key: keyof ProductData, shiftKey: boolean) => {
         dispatch({ type: 'UPDATE_SORT', payload: { key, shiftKey } });
-    };
+    }, [dispatch]);
 
     const headers = React.useMemo(() => {
         const baseHeaders: { key: keyof ProductData; title: string; isNumeric?: boolean; tooltip?: string }[] = [

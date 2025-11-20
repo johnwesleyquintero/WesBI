@@ -1,6 +1,7 @@
 
 
 
+
 import { useMemo } from 'react';
 import { useAppContext } from '../state/appContext';
 import { compareSnapshots } from '../services/dataProcessor';
@@ -162,6 +163,12 @@ export const useFilteredData = (): ProductData[] => {
                         return direction === 'asc' ? comparison : -comparison;
                     }
                 }
+                
+                // Technical Debt Fix: Deterministic Sorting
+                // If values are equal, fall back to SKU to ensure row order stability across renders.
+                if (a.sku < b.sku) return -1;
+                if (a.sku > b.sku) return 1;
+                
                 return 0;
             });
             return sorted;
