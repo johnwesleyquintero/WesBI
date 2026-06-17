@@ -191,12 +191,12 @@ const App: React.FC = () => {
                 <footer className="text-center p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
                     Crafted by Wes. Explore more mini-apps at{' '}
                     <a 
-                        href="https://wescode.vercel.app/" 
+                        href="https://scalesmart.vercel.app/" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="font-semibold text-[#6c34ff] hover:underline"
                     >
-                        wescode.vercel.app
+                        scalesmart.vercel.app
                     </a>.
                 </footer>
             </div>
