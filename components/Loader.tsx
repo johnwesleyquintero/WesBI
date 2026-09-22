@@ -1,7 +1,9 @@
 
 import * as React from 'react';
 import type { LoadingState } from '../types';
-import { BarChartIcon } from './Icons';
+import { BarChartIcon, SparklesIcon } from './Icons';
+import { useAppContext } from '../state/appContext';
+import { getSampleSnapshots } from '../services/sampleData';
 
 // --- Reusable Skeleton Placeholder ---
 const SkeletonPlaceholder: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -47,9 +49,37 @@ export const ChartsSkeleton: React.FC = () => {
 
 // --- Data Table Skeleton ---
 export const DataTableSkeleton: React.FC<{ isInitialState: boolean }> = ({ isInitialState }) => {
+    const { dispatch } = useAppContext();
     const headers = ['SKU', 'ASIN', 'Product Name', 'Condition', 'Available', 'Pending Removal', 'Avg Inv Age', 'Shipped T30', 'Sell-Through', 'Action', 'Risk Score', 'Inv. Value', 'Potential Rev.', 'Profit/Unit', 'Restock Units'];
     const numericIndexes = [4, 5, 6, 7, 8, 10, 11, 12, 13, 14];
     const rowCount = 10;
+
+    const handleLoadSampleData = async () => {
+        dispatch({ type: 'PROCESS_FILES_START' });
+        dispatch({ 
+            type: 'PROCESS_FILES_PROGRESS', 
+            payload: { message: 'Loading demo FBA snapshots & logistics...', progress: 40 } 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 250));
+        
+        dispatch({ 
+            type: 'PROCESS_FILES_PROGRESS', 
+            payload: { message: 'Calculating risk scores & inventory coverage...', progress: 85 } 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const sample = getSampleSnapshots();
+        dispatch({
+            type: 'LOAD_SAMPLE_DATA',
+            payload: {
+                snapshots: sample.snapshots,
+                activeSnapshotKey: sample.activeSnapshotKey,
+                insights: sample.insights,
+            }
+        });
+    };
 
     const renderSkeletonRow = (key: number) => (
         <tr key={key}>
@@ -74,10 +104,26 @@ export const DataTableSkeleton: React.FC<{ isInitialState: boolean }> = ({ isIni
     return (
         <div className="p-4 md:p-6 overflow-x-auto relative">
              {isInitialState && (
-                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm z-20">
-                    <BarChartIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                    <h2 className="text-xl font-semibold text-gray-600">Welcome to WesBI</h2>
-                    <p className="mt-2 text-gray-500">Upload one or more FBA Snapshot CSV files to get started.</p>
+                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/90 backdrop-blur-sm z-20 p-6 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-4 text-[#9c4dff] shadow-sm">
+                        <BarChartIcon className="w-9 h-9" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">Welcome to WesBI</h2>
+                    <p className="mt-2 text-gray-600 max-w-md">
+                        Upload your Amazon FBA Snapshot CSV files to get started, or explore the analytics cockpit right now with preloaded demo data.
+                    </p>
+                    <button
+                        id="welcome-sample-data-btn"
+                        type="button"
+                        onClick={handleLoadSampleData}
+                        className="mt-5 px-5 py-2.5 rounded-lg bg-[#9c4dff] hover:bg-[#7a33ff] text-white font-semibold shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 inline-flex items-center gap-2 cursor-pointer"
+                    >
+                        <SparklesIcon className="w-5 h-5 text-purple-200" />
+                        <span>Load Sample Data</span>
+                    </button>
+                    <p className="mt-3 text-xs text-gray-400">
+                        Includes 22 demo products across categories with full risk scoring, fees, and month-over-month snapshots.
+                    </p>
                  </div>
              )}
             <table className="w-full min-w-[1200px] border-collapse">

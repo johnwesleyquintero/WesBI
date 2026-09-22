@@ -8,12 +8,14 @@ import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';
 import { exportToCSV } from '../services/exportUtils';
 import { FILE_PROCESSING_THRESHOLDS } from '../constants';
+import { getSampleSnapshots } from '../services/sampleData';
 
 interface ControlButtonProps {
     onClick: () => void;
     children: React.ReactNode;
     className: string;
     disabled?: boolean;
+    id?: string;
 }
 
 // --- New UploadZone Component ---
@@ -24,10 +26,11 @@ interface UploadZoneProps {
     selectedFiles: FileList | File | null;
     onClear: () => void;
     multiple: boolean;
+    onLoadSample?: () => void;
 }
 
 const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
-    ({ title, description, onFileSelect, selectedFiles, onClear, multiple }, ref) => {
+    ({ title, description, onFileSelect, selectedFiles, onClear, multiple, onLoadSample }, ref) => {
         const [isDragOver, setIsDragOver] = React.useState(false);
         const inputRef = ref as React.RefObject<HTMLInputElement>;
 
@@ -145,6 +148,22 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
                         <CloudUploadIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-500 mb-2" />
                         <h3 className="font-bold text-gray-800 text-center">{title}</h3>
                         <p className="text-xs text-gray-500 text-center">{description}</p>
+                        {onLoadSample && (
+                            <div className="mt-2 pt-2 border-t border-gray-200/80 w-full text-center">
+                                <button
+                                    id="uploadzone-load-sample-btn"
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onLoadSample();
+                                    }}
+                                    className="text-xs font-semibold text-[#9c4dff] hover:text-[#7a33ff] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                    <SparklesIcon className="w-3.5 h-3.5" />
+                                    No CSV? Try Demo Sample Data
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -154,8 +173,9 @@ const UploadZone = React.forwardRef<HTMLInputElement, UploadZoneProps>(
 UploadZone.displayName = "UploadZone";
 
 
-const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, className, disabled = false }) => (
+const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, className, disabled = false, id }) => (
     <button
+        id={id}
         onClick={onClick}
         disabled={disabled}
         className={`px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2 whitespace-nowrap shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
@@ -248,6 +268,35 @@ const Controls: React.FC = () => {
         }});
     }, [filteredData, isComparisonMode, dispatch]);
 
+    const handleLoadSampleData = async () => {
+        dispatch({ type: 'PROCESS_FILES_START' });
+        dispatch({ 
+            type: 'PROCESS_FILES_PROGRESS', 
+            payload: { message: 'Loading demo FBA snapshots & logistics...', progress: 40 } 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 250));
+        
+        dispatch({ 
+            type: 'PROCESS_FILES_PROGRESS', 
+            payload: { message: 'Calculating risk scores & inventory coverage...', progress: 85 } 
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const sample = getSampleSnapshots();
+        dispatch({
+            type: 'LOAD_SAMPLE_DATA',
+            payload: {
+                snapshots: sample.snapshots,
+                activeSnapshotKey: sample.activeSnapshotKey,
+                insights: sample.insights,
+            }
+        });
+        setSnapshotFiles(null);
+        if (snapshotInputRef.current) snapshotInputRef.current.value = '';
+    };
+
     const handleSnapshotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         dispatch({ type: 'SET_ACTIVE_SNAPSHOT', payload: e.target.value });
     };
@@ -295,23 +344,32 @@ const Controls: React.FC = () => {
                             if (snapshotInputRef.current) snapshotInputRef.current.value = '';
                          }}
                         multiple={true}
+                        onLoadSample={handleLoadSampleData}
                      />
                  </div>
-                 <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                     <ControlButton 
+                        id="process-files-btn"
                         onClick={handleProcessFiles} 
                         disabled={!snapshotFiles || snapshotFiles.length === 0}
-                        className="bg-[#9c4dff] text-white hover:bg-[#7a33ff] sm:col-span-2 lg:col-span-1"
+                        className="bg-[#9c4dff] text-white hover:bg-[#7a33ff]"
                     >
                         <RocketIcon /> Process Files
                     </ControlButton>
-                    <ControlButton onClick={handleStrategyClick} disabled={!activeSnapshotKey || !aiFeaturesEnabled} className="bg-teal-500 text-white hover:bg-teal-600">
+                    <ControlButton 
+                        id="load-sample-data-btn"
+                        onClick={handleLoadSampleData}
+                        className="bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300"
+                    >
+                        <SparklesIcon /> Sample Data
+                    </ControlButton>
+                    <ControlButton id="ai-strategy-btn" onClick={handleStrategyClick} disabled={!activeSnapshotKey || !aiFeaturesEnabled} className="bg-teal-500 text-white hover:bg-teal-600">
                         <SparklesIcon /> AI Strategy
                     </ControlButton>
-                    <ControlButton onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
+                    <ControlButton id="compare-snapshots-btn" onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                         <CompareIcon /> Compare...
                     </ControlButton>
-                    <ControlButton onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
+                    <ControlButton id="export-csv-btn" onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
                         <ExportIcon /> Export
                     </ControlButton>
                 </div>

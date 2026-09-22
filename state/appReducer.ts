@@ -61,6 +61,7 @@ export type Action =
     | { type: 'PROCESS_FILES_PROGRESS', payload: { message: string, progress: number } }
     | { type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: Record<string, Snapshot>, latestSnapshotKey: string | null, insights: string[], filesProcessedCount: number } }
     | { type: 'PROCESS_FILES_ERROR', payload: { message: string } }
+    | { type: 'LOAD_SAMPLE_DATA', payload: { snapshots: Record<string, Snapshot>, activeSnapshotKey: string, insights: string[] } }
     | { type: 'SET_ACTIVE_SNAPSHOT', payload: string }
     | { type: 'SET_COMPARISON_MODE', payload: boolean }
     | { type: 'OPEN_COMPARISON_MODAL' }
@@ -147,6 +148,24 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 loadingState: { isLoading: false, message: '', progress: 0 },
                 toasts: [...state.toasts, { ...errorToast, id: Date.now().toString() }],
+            };
+        }
+        case 'LOAD_SAMPLE_DATA': {
+            const successToast: Omit<Toast, 'id'> = {
+                type: 'success',
+                title: 'Demo Data Loaded',
+                message: 'Loaded sample FBA snapshots with 22 products, risk metrics, and comparison data.'
+            };
+            return {
+                ...state,
+                snapshots: action.payload.snapshots,
+                activeSnapshotKey: action.payload.activeSnapshotKey,
+                insights: action.payload.insights,
+                loadingState: { isLoading: false, message: '', progress: 0 },
+                currentPage: 1,
+                isComparisonMode: false,
+                comparisonSnapshotKeys: { base: null, compare: null },
+                toasts: [...state.toasts, { ...successToast, id: Date.now().toString() }],
             };
         }
         case 'SET_ACTIVE_SNAPSHOT':
