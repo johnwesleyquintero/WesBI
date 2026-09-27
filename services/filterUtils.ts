@@ -85,3 +85,8 @@ export const applyMaxStockFilter = (data: ProductData[], maxStock: string): Prod
     if (isNaN(max)) return data;
     return data.filter(item => item.available <= max);
 };
+
+export const applyReorderStatusFilter = (data: ProductData[], status?: string): ProductData[] => {
+    if (!status || status === 'all') return data;
+    return data.filter(item => item.reorderStatus === status);
+};

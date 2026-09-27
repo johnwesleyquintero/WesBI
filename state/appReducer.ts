@@ -1,4 +1,4 @@
-import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings, Toast, Mission, MissionTask } from '../types';
+import type { ProductData, Snapshot, LoadingState, Filters, SortConfig, ForecastSettings, Toast, Mission, MissionTask, SalesChannel } from '../types';
 import { calculateMissionKpi } from '../services/missionService';
 
 export interface AppState {
@@ -23,6 +23,8 @@ export interface AppState {
     aiFeaturesEnabled: boolean;
     missions: Mission[];
     activeMissionId: string | null;
+    selectedChannel: SalesChannel;
+    viewMode: 'replenishment' | 'inventory_health';
 }
 
 export const initialState: AppState = {
@@ -39,11 +41,11 @@ export const initialState: AppState = {
     insights: [],
     filters: {
         search: '', condition: '', action: '', age: '', category: '',
-        minStock: '', maxStock: '', stockStatus: ''
+        minStock: '', maxStock: '', stockStatus: '', reorderStatus: 'all', channel: 'all'
     },
     forecastSettings: {
         leadTime: 30,
-        safetyStock: 14,
+        safetyStock: 7,
         demandForecast: 0,
     },
     sortConfig: [{ key: 'riskScore', direction: 'desc' }],
@@ -54,6 +56,8 @@ export const initialState: AppState = {
     aiFeaturesEnabled: true,
     missions: [],
     activeMissionId: null,
+    selectedChannel: 'all',
+    viewMode: 'replenishment',
 };
 
 export type Action =
@@ -62,6 +66,8 @@ export type Action =
     | { type: 'PROCESS_FILES_SUCCESS', payload: { snapshots: Record<string, Snapshot>, latestSnapshotKey: string | null, insights: string[], filesProcessedCount: number } }
     | { type: 'PROCESS_FILES_ERROR', payload: { message: string } }
     | { type: 'LOAD_SAMPLE_DATA', payload: { snapshots: Record<string, Snapshot>, activeSnapshotKey: string, insights: string[] } }
+    | { type: 'SET_SELECTED_CHANNEL', payload: SalesChannel }
+    | { type: 'SET_VIEW_MODE', payload: 'replenishment' | 'inventory_health' }
     | { type: 'SET_ACTIVE_SNAPSHOT', payload: string }
     | { type: 'SET_COMPARISON_MODE', payload: boolean }
     | { type: 'OPEN_COMPARISON_MODAL' }
@@ -168,6 +174,18 @@ export const appReducer = (state: AppState, action: Action): AppState => {
                 toasts: [...state.toasts, { ...successToast, id: Date.now().toString() }],
             };
         }
+        case 'SET_SELECTED_CHANNEL':
+            return {
+                ...state,
+                selectedChannel: action.payload,
+                filters: { ...state.filters, channel: action.payload },
+                currentPage: 1,
+            };
+        case 'SET_VIEW_MODE':
+            return {
+                ...state,
+                viewMode: action.payload,
+            };
         case 'SET_ACTIVE_SNAPSHOT':
             return {
                 ...state,

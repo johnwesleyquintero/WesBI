@@ -27,7 +27,7 @@ import { useFilteredData } from './hooks/useFilteredData';
 
 const App: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, isChatbotOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId } = state;
+    const { snapshots, activeSnapshotKey, loadingState, isComparisonMode, insights, currentPage, isComparisonModalOpen, isHelpModalOpen, isSettingsModalOpen, isStrategyModalOpen, isChatbotOpen, comparisonSnapshotKeys, itemsPerPage, aiFeaturesEnabled, activeMissionId, viewMode } = state;
 
     // State to track if the Recharts script has been loaded.
     const [rechartsReady, setRechartsReady] = React.useState(!!window.Recharts);
@@ -101,6 +101,32 @@ const App: React.FC = () => {
         }
         return activeSnapshot ? { current: activeSnapshot.stats, change: defaultChange } : null;
     }, [activeSnapshot, isComparisonMode, snapshots, comparisonSnapshotKeys]);
+
+    const replenishmentStats = React.useMemo(() => {
+        let reorderNowCount = 0;
+        let reorderSoonCount = 0;
+        let totalInbound = 0;
+        let totalDailyVelocity = 0;
+        let criticalStockoutCount = 0;
+
+        filteredAndSortedData.forEach(item => {
+            if (item.reorderStatus === 'REORDER NOW') reorderNowCount++;
+            if (item.reorderStatus === 'REORDER SOON') reorderSoonCount++;
+            totalInbound += (item.inboundWorking || 0) + (item.inboundShipped || 0) + (item.inboundReceiving || 0);
+            totalDailyVelocity += (item.dailyVelocity || 0);
+            if (item.daysUntilStockout !== undefined && item.daysUntilStockout <= 7 && item.available > 0) {
+                criticalStockoutCount++;
+            }
+        });
+
+        return {
+            reorderNowCount,
+            reorderSoonCount,
+            totalInbound,
+            totalDailyVelocity: totalDailyVelocity.toFixed(1),
+            criticalStockoutCount,
+        };
+    }, [filteredAndSortedData]);
     
     return (
         <div className="p-4 md:p-8">
@@ -136,12 +162,25 @@ const App: React.FC = () => {
                         {displayedStats && (
                             <ErrorBoundary>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 md:p-6 bg-gray-50 border-b border-gray-200">
-                                    <StatCard label="Total SKUs" value={displayedStats.current.totalProducts.toLocaleString()} change={displayedStats.change.totalProducts} />
-                                    <StatCard label="Available Inventory" value={displayedStats.current.totalAvailable.toLocaleString()} change={displayedStats.change.totalAvailable} />
-                                    <StatCard label="Pending Removal" value={displayedStats.current.totalPending.toLocaleString()} change={displayedStats.change.totalPending} />
-                                    <StatCard label="Sell-Through" value={`${displayedStats.current.sellThroughRate}%`} change={displayedStats.change.sellThroughRate} isPercentage={true} />
-                                    <StatCard label="Avg. Inv. Age" value={`${displayedStats.current.avgDaysInventory}d`} change={displayedStats.change.avgDaysInventory} />
-                                    <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
+                                    {viewMode === 'replenishment' ? (
+                                        <>
+                                            <StatCard label="Monitored SKUs" value={filteredAndSortedData.length.toLocaleString()} />
+                                            <StatCard label="🚨 Reorder Now" value={replenishmentStats.reorderNowCount.toString()} isNegativeChange={replenishmentStats.reorderNowCount > 0} />
+                                            <StatCard label="⚠️ Reorder Soon" value={replenishmentStats.reorderSoonCount.toString()} />
+                                            <StatCard label="En Route Inbound" value={replenishmentStats.totalInbound.toLocaleString()} />
+                                            <StatCard label="Daily Sales Velocity" value={`${replenishmentStats.totalDailyVelocity}/d`} />
+                                            <StatCard label="Stockout Risk (<7d)" value={replenishmentStats.criticalStockoutCount.toString()} isNegativeChange={replenishmentStats.criticalStockoutCount > 0} />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <StatCard label="Total SKUs" value={displayedStats.current.totalProducts.toLocaleString()} change={displayedStats.change.totalProducts} />
+                                            <StatCard label="Available Inventory" value={displayedStats.current.totalAvailable.toLocaleString()} change={displayedStats.change.totalAvailable} />
+                                            <StatCard label="Pending Removal" value={displayedStats.current.totalPending.toLocaleString()} change={displayedStats.change.totalPending} />
+                                            <StatCard label="Sell-Through" value={`${displayedStats.current.sellThroughRate}%`} change={displayedStats.change.sellThroughRate} isPercentage={true} />
+                                            <StatCard label="Avg. Inv. Age" value={`${displayedStats.current.avgDaysInventory}d`} change={displayedStats.change.avgDaysInventory} />
+                                            <StatCard label="At-Risk SKUs" value={displayedStats.current.atRiskSKUs.toLocaleString()} change={displayedStats.change.atRiskSKUs} />
+                                        </>
+                                    )}
                                 </div>
                             </ErrorBoundary>
                         )}
@@ -182,7 +221,7 @@ const App: React.FC = () => {
 
                         {/* Real Data Table and Pagination */}
                         <ErrorBoundary>
-                            <DataTable data={paginatedData} />
+                            <DataTable data={paginatedData} fullData={filteredAndSortedData} />
                             {totalPages > 1 && <Pagination totalPages={totalPages} />}
                         </ErrorBoundary>
                     </>

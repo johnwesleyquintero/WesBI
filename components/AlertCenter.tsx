@@ -44,24 +44,23 @@ const AlertCenter: React.FC<AlertCenterProps> = ({ data, isComparisonMode }) => 
         const generatedAlerts: Alert[] = [];
         if (data.length === 0) return [];
 
-        // 1. Stockout Alert (Critical)
-        const stockoutCandidates = data
-            .filter(item => item.available > 0 && item.shippedT30 > 0)
-            .map(item => ({ ...item, daysToStockout: item.available / (item.shippedT30 / 30) }))
-            .filter(item => item.daysToStockout < 14)
-            .sort((a, b) => a.daysToStockout - b.daysToStockout);
+        // 1. Replenishment & Stockout Alert (Critical)
+        const reorderNowCandidates = data
+            .filter(item => item.reorderStatus === 'REORDER NOW' || ((item.whseDaysOfCover ?? 999) < 14 && item.available > 0))
+            .sort((a, b) => (a.whseDaysOfCover ?? 999) - (b.whseDaysOfCover ?? 999));
 
-        if (stockoutCandidates.length > 0) {
+        if (reorderNowCandidates.length > 0) {
+            const urgentList = reorderNowCandidates.slice(0, 3).map(i => `${i.sku} (${i.whseDaysOfCover ?? '<14'}d cover)`).join(', ');
             generatedAlerts.push({
-                id: 'stockout-alert',
+                id: 'reorder-now-alert',
                 type: 'critical',
                 icon: <ClockIcon className="h-5 w-5 text-red-500" />,
-                title: `Projected Stockout Risk: ${stockoutCandidates.length} SKU(s)`,
+                title: `🚨 Reorder Alert: ${reorderNowCandidates.length} SKU(s) Require Immediate PO`,
                 message: (
                     <p>
-                        The following SKUs are projected to stock out in under 14 days: {' '}
-                        <strong>{stockoutCandidates.slice(0, 3).map(i => i.sku).join(', ')}</strong>
-                        {stockoutCandidates.length > 3 ? ' and more.' : '.'}
+                        Coverage is below supplier lead time &amp; safety stock buffer: {' '}
+                        <strong>{urgentList}</strong>
+                        {reorderNowCandidates.length > 3 ? ` and ${reorderNowCandidates.length - 3} more.` : '.'} Expedite purchase orders to prevent out-of-stock downtime.
                     </p>
                 ),
             });

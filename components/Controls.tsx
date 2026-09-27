@@ -1,12 +1,12 @@
 
 
 import * as React from 'react';
-import type { Filters, ForecastSettings } from '../types';
+import type { Filters, ForecastSettings, SalesChannel } from '../types';
 import { RocketIcon, CompareIcon, ExportIcon, SearchIcon, SparklesIcon, CloudUploadIcon, CheckCircleIcon, XIcon } from './Icons';
 import { useAppContext } from '../state/appContext';
 import { useFilteredData } from '../hooks/useFilteredData';
 import { processFiles } from '../services/snapshotService';
-import { exportToCSV } from '../services/exportUtils';
+import { exportToCSV, exportReplenishmentMatrixCSV, exportInventoryHealthCSV, exportCurrentViewCSV } from '../services/exportUtils';
 import { FILE_PROCESSING_THRESHOLDS } from '../constants';
 import { getSampleSnapshots } from '../services/sampleData';
 
@@ -184,9 +184,18 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, children, classN
     </button>
 );
 
+const CHANNELS: { id: SalesChannel; label: string; icon: string; badge: string }[] = [
+    { id: 'all', label: 'Omni (All Channels)', icon: '🌐', badge: 'Combined POs & Supply' },
+    { id: 'amazon', label: 'Amazon FBA', icon: '📦', badge: 'FBA Inventory & Inbound' },
+    { id: 'walmart', label: 'Walmart WFS', icon: '🔵', badge: 'WFS Inventory & Transfers' },
+    { id: 'shopify', label: 'Shopify / DTC', icon: '🛍️', badge: 'Direct-to-Consumer' },
+    { id: 'tiktok', label: 'TikTok Shop', icon: '🎵', badge: 'Fast Social Commerce' },
+];
+
 const Controls: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings, apiKey, aiFeaturesEnabled } = state;
+    const { filters, snapshots, activeSnapshotKey, isComparisonMode, forecastSettings, apiKey, aiFeaturesEnabled, selectedChannel, viewMode } = state;
+    const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
     const [searchInput, setSearchInput] = React.useState(filters.search);
     const [snapshotFiles, setSnapshotFiles] = React.useState<FileList | null>(null);
@@ -249,24 +258,55 @@ const Controls: React.FC = () => {
         }
     };
     
-    const handleExport = React.useCallback(() => {
+    const handleExportReplenishment = React.useCallback(() => {
         if (filteredData.length === 0) {
             dispatch({ type: 'ADD_TOAST', payload: {
                 type: 'info',
                 title: 'No Data to Export',
-                message: 'There are no products matching your current filters.'
+                message: 'There are no products matching your current filters in Replenishment Matrix.'
             }});
             return;
         }
-        const timestamp = new Date().toISOString().split('T')[0];
-        const mode = isComparisonMode ? 'comparison' : 'snapshot';
-        exportToCSV(filteredData, `wesbi_export_${mode}_${timestamp}.csv`);
+        exportReplenishmentMatrixCSV(filteredData, {
+            channel: selectedChannel,
+            leadTime: forecastSettings.leadTime,
+            safetyStock: forecastSettings.safetyStock,
+            snapshotName: activeSnapshot?.name,
+        });
         dispatch({ type: 'ADD_TOAST', payload: {
             type: 'success',
-            title: 'Export Successful',
-            message: `${filteredData.length} rows have been exported to CSV.`
+            title: 'Replenishment Matrix Exported',
+            message: `Exported ${filteredData.length} SKUs with lead time (${forecastSettings.leadTime}d), safety buffer (${forecastSettings.safetyStock}d), and reorder recommendations.`
         }});
-    }, [filteredData, isComparisonMode, dispatch]);
+    }, [filteredData, selectedChannel, forecastSettings, activeSnapshot, dispatch]);
+
+    const handleExportHealth = React.useCallback(() => {
+        if (filteredData.length === 0) {
+            dispatch({ type: 'ADD_TOAST', payload: {
+                type: 'info',
+                title: 'No Data to Export',
+                message: 'There are no products matching your current filters in Inventory Health & Risk.'
+            }});
+            return;
+        }
+        exportInventoryHealthCSV(filteredData, {
+            snapshotName: activeSnapshot?.name,
+            isComparison: isComparisonMode,
+        });
+        dispatch({ type: 'ADD_TOAST', payload: {
+            type: 'success',
+            title: 'Inventory Health & Risk Exported',
+            message: `Exported ${filteredData.length} SKUs with aging brackets, sell-through, risk scores, and removal actions.`
+        }});
+    }, [filteredData, activeSnapshot, isComparisonMode, dispatch]);
+
+    const handleExportCurrentView = React.useCallback(() => {
+        if (viewMode === 'replenishment') {
+            handleExportReplenishment();
+        } else {
+            handleExportHealth();
+        }
+    }, [viewMode, handleExportReplenishment, handleExportHealth]);
 
     const handleLoadSampleData = async () => {
         dispatch({ type: 'PROCESS_FILES_START' });
@@ -313,8 +353,6 @@ const Controls: React.FC = () => {
         return Object.values(filters).filter(Boolean).length;
     }, [filters]);
 
-    const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
-
     const uniqueCategories = React.useMemo(() => {
         if (!activeSnapshot) return [];
         const categories = new Set(activeSnapshot.data.map(item => item.category));
@@ -330,6 +368,153 @@ const Controls: React.FC = () => {
     
     return (
         <div className="bg-gray-50 border-b border-gray-200 p-4 md:p-6 space-y-4">
+            {/* Top Bar: Multi-Channel Marketplace Tabs & View Mode Switcher */}
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pb-3 border-b border-gray-200">
+                {/* Marketplace Channels Tabs */}
+                <div className="flex flex-wrap items-center gap-1.5 bg-gray-200/70 p-1.5 rounded-xl">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider px-2">Marketplace:</span>
+                    {CHANNELS.map(ch => {
+                        const isActive = (selectedChannel || 'all') === ch.id;
+                        return (
+                            <button
+                                key={ch.id}
+                                id={`channel-${ch.id}-btn`}
+                                type="button"
+                                onClick={() => dispatch({ type: 'SET_SELECTED_CHANNEL', payload: ch.id })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                                    isActive
+                                        ? 'bg-white text-[#6c34ff] shadow-sm ring-1 ring-purple-200'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+                                }`}
+                                title={ch.badge}
+                            >
+                                <span>{ch.icon}</span>
+                                <span>{ch.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* View Mode Switcher with dedicated Export buttons on each tab */}
+                <div className="flex flex-wrap items-center gap-1.5 bg-purple-50/90 border border-purple-200 p-1.5 rounded-xl shrink-0">
+                    {/* Tab 1: Replenishment Matrix */}
+                    <div className={`flex items-center rounded-lg transition-all duration-200 shadow-sm ${
+                        viewMode === 'replenishment'
+                            ? 'bg-[#9c4dff] text-white ring-1 ring-purple-400'
+                            : 'bg-white/90 text-purple-800 hover:bg-purple-100/80 border border-purple-200/60'
+                    }`}>
+                        <button
+                            id="view-replenishment-btn"
+                            type="button"
+                            onClick={() => dispatch({ type: 'SET_VIEW_MODE', payload: 'replenishment' })}
+                            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <span>⚡</span>
+                            <span>Replenishment Matrix</span>
+                        </button>
+                        <button
+                            id="export-replenishment-tab-btn"
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportReplenishment();
+                            }}
+                            disabled={filteredData.length === 0}
+                            title="Export Replenishment Matrix (Current View CSV)"
+                            className={`px-2 py-1.5 text-[11px] font-bold flex items-center gap-1 border-l cursor-pointer transition-colors ${
+                                viewMode === 'replenishment'
+                                    ? 'border-purple-300/40 text-purple-100 hover:bg-[#8534e6] hover:text-white'
+                                    : 'border-purple-200 text-purple-600 hover:bg-purple-200 hover:text-purple-900'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                            <ExportIcon className="w-3.5 h-3.5" />
+                            <span>Export</span>
+                        </button>
+                    </div>
+
+                    {/* Tab 2: Inventory Health & Risk */}
+                    <div className={`flex items-center rounded-lg transition-all duration-200 shadow-sm ${
+                        viewMode === 'inventory_health'
+                            ? 'bg-[#9c4dff] text-white ring-1 ring-purple-400'
+                            : 'bg-white/90 text-purple-800 hover:bg-purple-100/80 border border-purple-200/60'
+                    }`}>
+                        <button
+                            id="view-health-btn"
+                            type="button"
+                            onClick={() => dispatch({ type: 'SET_VIEW_MODE', payload: 'inventory_health' })}
+                            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <span>📊</span>
+                            <span>Inventory Health & Risk</span>
+                        </button>
+                        <button
+                            id="export-health-tab-btn"
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportHealth();
+                            }}
+                            disabled={filteredData.length === 0}
+                            title="Export Inventory Health & Risk (Current View CSV)"
+                            className={`px-2 py-1.5 text-[11px] font-bold flex items-center gap-1 border-l cursor-pointer transition-colors ${
+                                viewMode === 'inventory_health'
+                                    ? 'border-purple-300/40 text-purple-100 hover:bg-[#8534e6] hover:text-white'
+                                    : 'border-purple-200 text-purple-600 hover:bg-purple-200 hover:text-purple-900'
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                            <ExportIcon className="w-3.5 h-3.5" />
+                            <span>Export</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Operational Lead Time Bar (Shown in Replenishment View) */}
+            {viewMode === 'replenishment' && (
+                <div className="bg-purple-50/60 border border-purple-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-purple-900 flex items-center gap-1">
+                            <span>⚙️</span> Operational Reorder Engine:
+                        </span>
+                        <span className="text-purple-700">
+                            Lead Time: <strong className="text-purple-900 font-mono text-sm">{forecastSettings.leadTime}d</strong> + Safety Stock: <strong className="text-purple-900 font-mono text-sm">{forecastSettings.safetyStock}d</strong> = Buffer: <strong className="text-[#6c34ff] font-mono text-sm">{forecastSettings.leadTime + forecastSettings.safetyStock} days</strong>
+                        </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-gray-500 font-medium">Quick Lead Time:</span>
+                        {[15, 30, 45, 60].map(days => (
+                            <button
+                                key={days}
+                                type="button"
+                                onClick={() => handleForecastSettingChange('leadTime', days.toString())}
+                                className={`px-2 py-0.5 rounded text-xs font-bold transition-all cursor-pointer ${
+                                    forecastSettings.leadTime === days
+                                        ? 'bg-[#6c34ff] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                                }`}
+                            >
+                                {days}d
+                            </button>
+                        ))}
+                        <span className="text-gray-500 font-medium ml-2">Safety Buffer:</span>
+                        {[7, 14, 21].map(days => (
+                            <button
+                                key={days}
+                                type="button"
+                                onClick={() => handleForecastSettingChange('safetyStock', days.toString())}
+                                className={`px-2 py-0.5 rounded text-xs font-bold transition-all cursor-pointer ${
+                                    forecastSettings.safetyStock === days
+                                        ? 'bg-[#6c34ff] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                                }`}
+                            >
+                                {days}d
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {/* File Upload Section */}
                  <div className="lg:col-span-1">
@@ -369,8 +554,13 @@ const Controls: React.FC = () => {
                     <ControlButton id="compare-snapshots-btn" onClick={handleCompareClick} disabled={Object.keys(snapshots).length < 2} className="bg-blue-500 text-white hover:bg-blue-600">
                         <CompareIcon /> Compare...
                     </ControlButton>
-                    <ControlButton id="export-csv-btn" onClick={handleExport} disabled={filteredData.length === 0} className="bg-green-500 text-white hover:bg-green-600">
-                        <ExportIcon /> Export
+                    <ControlButton 
+                        id="export-csv-btn" 
+                        onClick={handleExportCurrentView} 
+                        disabled={filteredData.length === 0} 
+                        className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
+                        <ExportIcon /> Export {viewMode === 'replenishment' ? 'Replenishment' : 'Health & Risk'}
                     </ControlButton>
                 </div>
             </div>
@@ -406,7 +596,21 @@ const Controls: React.FC = () => {
                         }`}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+                    <select 
+                        aria-label="Filter by reorder status" 
+                        value={filters.reorderStatus || 'all'} 
+                        onChange={(e) => handleFilterChange('reorderStatus', e.target.value)} 
+                        className={getFilterClass(!!filters.reorderStatus && filters.reorderStatus !== 'all')}
+                    >
+                        <option value="all">All Reorder Decisions</option>
+                        <option value="REORDER NOW">🚨 REORDER NOW</option>
+                        <option value="REORDER SOON">⚠️ REORDER SOON</option>
+                        <option value="HEALTHY">✅ HEALTHY</option>
+                        <option value="OVERSTOCK">📦 OVERSTOCK</option>
+                        <option value="LIQUIDATE">🏷️ LIQUIDATE</option>
+                        <option value="STRANDED">⚠️ STRANDED</option>
+                    </select>
                     <select aria-label="Filter by inventory age bracket" value={filters.age} onChange={(e) => handleFilterChange('age', e.target.value)} className={getFilterClass(!!filters.age)}>
                         <option value="">All Age Brackets</option>
                         <option value="0-90">0-90 days</option>

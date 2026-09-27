@@ -13,9 +13,10 @@ import {
     applyStockStatusFilter, 
     applyMinStockFilter,
     applyMaxStockFilter,
-    applyCategoryFilter
+    applyCategoryFilter,
+    applyReorderStatusFilter
 } from '../services/filterUtils';
-import type { ProductData, ForecastSettings } from '../types';
+import type { ProductData, ForecastSettings, ReorderStatus } from '../types';
 import { FORECAST_CONFIG, VELOCITY_TREND_INDICATOR } from '../constants';
 
 /**
@@ -94,7 +95,7 @@ const calculateRestockRecommendation = (item: ProductData, settings: ForecastSet
 
 export const useFilteredData = (): ProductData[] => {
     const { state } = useAppContext();
-    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig, comparisonSnapshotKeys, forecastSettings } = state;
+    const { snapshots, isComparisonMode, activeSnapshotKey, filters, sortConfig, comparisonSnapshotKeys, forecastSettings, selectedChannel } = state;
     
     const activeSnapshot = activeSnapshotKey ? snapshots[activeSnapshotKey] : null;
 
@@ -113,22 +114,96 @@ export const useFilteredData = (): ProductData[] => {
         return data;
     }, [activeSnapshot, isComparisonMode, snapshots, comparisonSnapshotKeys]);
 
-    // Stage 2: Apply the potentially expensive forecast calculation.
-    // This only re-runs when the base data or forecast settings change.
+    // Stage 2: Apply dynamic channel velocity, lead time, and replenishment calculations
     const dataWithForecast = useMemo(() => {
         if (!baseData) return [];
-        return baseData.map(item => ({
-            ...item,
-            restockRecommendation: calculateRestockRecommendation(item, forecastSettings)
-        }));
-    }, [baseData, forecastSettings]);
+        const channel = selectedChannel || 'all';
+        const leadTime = forecastSettings.leadTime || 30;
+        const safetyStock = forecastSettings.safetyStock || 7;
+        const requiredCoverage = leadTime + safetyStock; // e.g. 37 days
+
+        return baseData.map(item => {
+            // Determine active units sold based on channel
+            let channelUnits = item.shippedT30;
+            if (channel === 'amazon' && item.channelSales) {
+                channelUnits = item.channelSales.amazon;
+            } else if (channel === 'walmart' && item.channelSales) {
+                channelUnits = item.channelSales.walmart;
+            } else if (channel === 'shopify' && item.channelSales) {
+                channelUnits = item.channelSales.shopify;
+            } else if (channel === 'tiktok' && item.channelSales) {
+                channelUnits = item.channelSales.tiktok;
+            }
+
+            const activeVelocity = parseFloat((channelUnits / 30).toFixed(2));
+            const netStock = item.netAvailableStock ?? item.available;
+
+            const rawWhseCover = activeVelocity > 0 ? (item.available / activeVelocity) : (item.available > 0 ? 999 : 0);
+            const whseDaysOfCover = rawWhseCover === 999 ? 999 : parseFloat(rawWhseCover.toFixed(1));
+
+            const rawPipelineCover = activeVelocity > 0 ? (netStock / activeVelocity) : (netStock > 0 ? 999 : 0);
+            const pipelineDaysOfCover = rawPipelineCover === 999 ? 999 : parseFloat(rawPipelineCover.toFixed(1));
+
+            let reorderStatus: ReorderStatus = 'HEALTHY';
+            let suggestedReorderQty = 0;
+
+            if (activeVelocity <= 0 && item.available > 0) {
+                if (item.totalInvAgeDays > 180) {
+                    reorderStatus = 'LIQUIDATE';
+                } else {
+                    reorderStatus = 'STRANDED';
+                }
+            } else if (activeVelocity > 0) {
+                if (pipelineDaysOfCover <= requiredCoverage) {
+                    reorderStatus = 'REORDER NOW';
+                    const targetUnits = Math.ceil(activeVelocity * (requiredCoverage + 30));
+                    suggestedReorderQty = Math.max(0, targetUnits - netStock);
+                } else if (pipelineDaysOfCover <= (leadTime * 1.5 + safetyStock)) {
+                    reorderStatus = 'REORDER SOON';
+                    const targetUnits = Math.ceil(activeVelocity * (requiredCoverage + 30));
+                    suggestedReorderQty = Math.max(0, targetUnits - netStock);
+                } else if (pipelineDaysOfCover > 120) {
+                    reorderStatus = 'OVERSTOCK';
+                    suggestedReorderQty = 0;
+                } else {
+                    reorderStatus = 'HEALTHY';
+                    suggestedReorderQty = 0;
+                }
+            }
+
+            const daysUntilStockout = Math.max(0, Math.floor(whseDaysOfCover === 999 ? 999 : whseDaysOfCover));
+            const stockoutDate = daysUntilStockout === 0
+                ? 'Stocked Out'
+                : daysUntilStockout >= 999
+                ? '> 180 days'
+                : daysUntilStockout <= 2
+                ? 'Critical (< 48h)'
+                : `In ${daysUntilStockout} days`;
+
+            const restockRecommendation = calculateRestockRecommendation(
+                { ...item, available: netStock }, 
+                forecastSettings
+            );
+
+            return {
+                ...item,
+                dailyVelocity: activeVelocity,
+                whseDaysOfCover,
+                pipelineDaysOfCover,
+                daysOfCover: pipelineDaysOfCover,
+                reorderStatus,
+                suggestedReorderQty,
+                daysUntilStockout,
+                stockoutDate,
+                restockRecommendation: suggestedReorderQty > 0 ? suggestedReorderQty : restockRecommendation
+            };
+        });
+    }, [baseData, forecastSettings, selectedChannel]);
     
     // Stage 3: Apply filtering and sorting.
-    // This re-runs frequently (on filter/sort changes) but operates on the already-calculated data.
     return useMemo(() => {
         if (!dataWithForecast) return [];
         
-        // FIX: Explicitly type `filtered` as ProductData[] to match the return type of the filter functions.
         let filtered: ProductData[] = dataWithForecast;
         filtered = applySearchFilter(filtered, filters.search);
         filtered = applyActionFilter(filtered, filters.action);
@@ -137,6 +212,7 @@ export const useFilteredData = (): ProductData[] => {
         filtered = applyStockStatusFilter(filtered, filters.stockStatus);
         filtered = applyMinStockFilter(filtered, filters.minStock);
         filtered = applyMaxStockFilter(filtered, filters.maxStock);
+        filtered = applyReorderStatusFilter(filtered, filters.reorderStatus);
 
         if (sortConfig.length > 0) {
             const sorted = [...filtered].sort((a, b) => {

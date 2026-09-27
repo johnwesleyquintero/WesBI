@@ -1,6 +1,6 @@
 
 
-import type { ProductData, Stats, Snapshot } from '../types';
+import type { ProductData, Stats, Snapshot, ReorderStatus, ChannelSalesBreakdown } from '../types';
 import { RISK_SCORE_CONFIG, INVENTORY_AGE_WEIGHTS, RISK_SCORE_THRESHOLDS, VELOCITY_TREND_INDICATOR, URGENCY_CONFIG } from '../constants';
 import { parseNumeric } from './utils';
 
@@ -130,52 +130,107 @@ export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): P
         ) / totalInv : 0;
         
         const sellThroughRate = available + shippedT30 > 0 ? Math.round((shippedT30 / (available + shippedT30)) * 100) : 0;
-        const dailySales = shippedT30 / 30;
+        const dailyVelocity = parseFloat((shippedT30 / 30).toFixed(2));
+        const dailySales = dailyVelocity;
+
+        // --- Multi-Channel Sales Breakdown ---
+        let amazonSales = parseNumeric(row['sales-amazon'] ?? row['units-shipped-t30-amazon']);
+        let walmartSales = parseNumeric(row['sales-walmart'] ?? row['units-shipped-t30-walmart']);
+        let shopifySales = parseNumeric(row['sales-shopify'] ?? row['units-shipped-t30-shopify']);
+        let tiktokSales = parseNumeric(row['sales-tiktok'] ?? row['units-shipped-t30-tiktok']);
+
+        if (amazonSales === 0 && walmartSales === 0 && shopifySales === 0 && tiktokSales === 0 && shippedT30 > 0) {
+            amazonSales = Math.round(shippedT30 * 0.65);
+            walmartSales = Math.round(shippedT30 * 0.15);
+            shopifySales = Math.round(shippedT30 * 0.12);
+            tiktokSales = Math.max(0, shippedT30 - (amazonSales + walmartSales + shopifySales));
+        }
+
+        const channelSales: ChannelSalesBreakdown = {
+            amazon: amazonSales,
+            walmart: walmartSales,
+            shopify: shopifySales,
+            tiktok: tiktokSales
+        };
 
         // --- MFI Enrichment & Logistics Calculation ---
-        // Initialize with default undefined or 0
         let inboundWorking: number | undefined = undefined;
         let inboundShipped: number | undefined = undefined;
         let inboundReceiving: number | undefined = undefined;
         let reservedQuantity: number | undefined = undefined;
-        
-        let netAvailableStock: number | undefined = undefined;
-        let daysOfCover: number | undefined = undefined;
-        let urgencyScore: number | undefined = undefined;
-        let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' | undefined = undefined;
 
         if (mfiMap && mfiMap.has(sku)) {
             const mfi = mfiMap.get(sku)!;
-            
             inboundWorking = mfi.inboundWorking;
             inboundShipped = mfi.inboundShipped;
             inboundReceiving = mfi.inboundReceiving;
             reservedQuantity = mfi.reservedQuantity;
+        }
 
-            // 1. Calculate Net Available Stock
-            // Formula: afn-fulfillable + afn-inbound-working + afn-inbound-shipped – afn-reserved-quantity
-            netAvailableStock = (available + mfi.inboundWorking + mfi.inboundShipped) - mfi.reservedQuantity;
-            
-            // 2. Calculate Stock Coverage Days
-            // Formula: (Net Available Stock / Avg Daily Sales)
-            daysOfCover = dailySales > 0 ? netAvailableStock / dailySales : (netAvailableStock > 0 ? 999 : 0);
-            // Round immediately for display logic consistency
-            daysOfCover = daysOfCover === 999 ? 999 : Math.round(daysOfCover);
+        const totalInbound = (inboundWorking || 0) + (inboundShipped || 0) + (inboundReceiving || 0);
+        const netAvailableStock = (available + totalInbound) - (reservedQuantity || 0);
 
-            // 3. Calculate Urgency Score
-            // Formula: (Sell-Through % x Forecasted Daily Sales) – Net Available Stock
-            const rawUrgencyScore = ((sellThroughRate / 100) * dailySales) - netAvailableStock;
-            urgencyScore = parseFloat(rawUrgencyScore.toFixed(2));
+        // Calculate Whse Cover (on-shelf warehouse stock without inbound)
+        const rawWhseCover = dailyVelocity > 0 ? (available / dailyVelocity) : (available > 0 ? 999 : 0);
+        const whseDaysOfCover = rawWhseCover === 999 ? 999 : parseFloat(rawWhseCover.toFixed(1));
 
-            // 4. Determine Status
-            urgencyStatus = 'Healthy';
-            if (daysOfCover <= URGENCY_CONFIG.COVERAGE_CRITICAL_DAYS || rawUrgencyScore > URGENCY_CONFIG.URGENCY_SCORE_THRESHOLD) {
-                urgencyStatus = 'Critical';
-            } else if (daysOfCover <= URGENCY_CONFIG.COVERAGE_WARNING_DAYS) {
-                urgencyStatus = 'Warning';
+        // Calculate Pipeline Cover (total stock with inbound)
+        const rawPipelineCover = dailyVelocity > 0 ? (netAvailableStock / dailyVelocity) : (netAvailableStock > 0 ? 999 : 0);
+        const pipelineDaysOfCover = rawPipelineCover === 999 ? 999 : parseFloat(rawPipelineCover.toFixed(1));
+        const daysOfCover = pipelineDaysOfCover;
+
+        // Reorder Urgency & Decision Engine
+        // Base lead time = 30 days, safety stock = 7 days -> 37 days threshold
+        const leadTimeDays = 30;
+        const safetyStockDays = 7;
+        const reorderCycleDays = 30;
+        const requiredCoverage = leadTimeDays + safetyStockDays; // 37 days
+
+        let reorderStatus: ReorderStatus = 'HEALTHY';
+        let suggestedReorderQty = 0;
+
+        if (dailyVelocity <= 0 && available > 0) {
+            if (avgAge > 180) {
+                reorderStatus = 'LIQUIDATE';
+            } else {
+                reorderStatus = 'STRANDED';
+            }
+        } else if (dailyVelocity > 0) {
+            if (pipelineDaysOfCover <= requiredCoverage) {
+                reorderStatus = 'REORDER NOW';
+                const targetUnits = Math.ceil(dailyVelocity * (requiredCoverage + reorderCycleDays));
+                suggestedReorderQty = Math.max(0, targetUnits - netAvailableStock);
+            } else if (pipelineDaysOfCover <= (leadTimeDays * 1.5 + safetyStockDays)) {
+                reorderStatus = 'REORDER SOON';
+                const targetUnits = Math.ceil(dailyVelocity * (requiredCoverage + reorderCycleDays));
+                suggestedReorderQty = Math.max(0, targetUnits - netAvailableStock);
+            } else if (pipelineDaysOfCover > 120) {
+                reorderStatus = 'OVERSTOCK';
+                suggestedReorderQty = 0;
+            } else {
+                reorderStatus = 'HEALTHY';
+                suggestedReorderQty = 0;
             }
         }
 
+        const daysUntilStockout = Math.max(0, Math.floor(whseDaysOfCover === 999 ? 999 : whseDaysOfCover));
+        const stockoutDate = daysUntilStockout === 0
+            ? 'Stocked Out'
+            : daysUntilStockout >= 999
+            ? '> 180 days'
+            : daysUntilStockout <= 2
+            ? 'Critical (< 48h)'
+            : `In ${daysUntilStockout} days`;
+
+        // Urgency score calculation
+        const rawUrgencyScore = ((sellThroughRate / 100) * (dailyVelocity || 0.1)) - netAvailableStock;
+        const urgencyScore = parseFloat(rawUrgencyScore.toFixed(2));
+        let urgencyStatus: 'Critical' | 'Warning' | 'Healthy' = 'Healthy';
+        if (reorderStatus === 'REORDER NOW' || whseDaysOfCover <= 3) {
+            urgencyStatus = 'Critical';
+        } else if (reorderStatus === 'REORDER SOON' || whseDaysOfCover <= 7) {
+            urgencyStatus = 'Warning';
+        }
 
         const partialData: Omit<ProductData, 'riskScore'> = {
             sku: sku,
@@ -192,14 +247,21 @@ export const processRawData = (rawData: any[], mfiMap?: Map<string, MfiData>): P
             totalInvAgeDays: Math.round(avgAge),
             shippedT30: shippedT30,
             sellThroughRate,
-            recommendedAction: row['recommended-action'] || 'No Action',
+            recommendedAction: row['recommended-action'] || (reorderStatus === 'REORDER NOW' ? 'Restock Immediately' : reorderStatus === 'REORDER SOON' ? 'Prepare PO' : 'No Action'),
             category: row['category'] || 'Unknown',
-            // MFI Fields - explicitly assigned instead of spread for performance
+            // MFI & Multi-Channel Fields
+            channelSales,
+            dailyVelocity,
+            whseDaysOfCover,
+            pipelineDaysOfCover,
+            reorderStatus,
+            suggestedReorderQty,
+            daysUntilStockout,
+            stockoutDate,
             inboundWorking,
             inboundShipped,
             inboundReceiving,
             reservedQuantity,
-            // Urgency Fields
             netAvailableStock,
             daysOfCover,
             urgencyScore,

@@ -1,5 +1,16 @@
 
 
+export type SalesChannel = 'all' | 'amazon' | 'walmart' | 'shopify' | 'tiktok';
+
+export type ReorderStatus = 'REORDER NOW' | 'REORDER SOON' | 'HEALTHY' | 'OVERSTOCK' | 'LIQUIDATE' | 'STRANDED';
+
+export interface ChannelSalesBreakdown {
+  amazon: number;
+  walmart: number;
+  shopify: number;
+  tiktok: number;
+}
+
 export interface ProductData {
   sku: string;
   asin: string;
@@ -19,6 +30,16 @@ export interface ProductData {
   riskScore: number; // calculated field
   category: string;
   restockRecommendation?: number; // calculated field
+
+  // --- Multi-Channel Marketplace Integration ---
+  channelSales?: ChannelSalesBreakdown;
+  dailyVelocity?: number; // active channel velocity (units/day)
+  whseDaysOfCover?: number; // available / dailyVelocity
+  pipelineDaysOfCover?: number; // (available + inbound - reserved) / dailyVelocity
+  reorderStatus?: ReorderStatus;
+  suggestedReorderQty?: number;
+  daysUntilStockout?: number;
+  stockoutDate?: string;
 
   // --- MFI Integration Fields ---
   inboundWorking?: number;
@@ -72,6 +93,8 @@ export interface Filters {
   minStock: string;
   maxStock: string;
   stockStatus: string;
+  reorderStatus?: string;
+  channel?: SalesChannel;
 }
 
 export interface ForecastSettings {
